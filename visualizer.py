@@ -1,3 +1,5 @@
+import os
+
 from matplotlib import pyplot as plt
 import pandas as pd
 from pandas.core.frame import DataFrame
@@ -8,11 +10,8 @@ class Visualizer:
     def show_dataset(dataset: DataFrame, savefig=False):
         plt.xlabel('x')
         plt.ylabel('y')
-        try:
-            dataset_name = dataset.dataset_name
-            plt.title(f"Dataset: '{dataset_name}'")
-        except AttributeError:
-            dataset_name = 'no_title'
+        if hasattr(dataset, 'name'):
+            plt.title(f"Dataset: '{dataset.name}'")
 
         if dataset.task == 'regression':
             x = dataset.x
@@ -29,9 +28,15 @@ class Visualizer:
             raise Exception('Task in dataset undefined')
 
         if savefig:
-            path = f'plots/{dataset_name.rsplit(sep=".", maxsplit=1)[0]}.jpg'
-            plt.savefig(fname=path, dpi=300)
-            plt.clf()
+            if hasattr(dataset, 'path') and hasattr(dataset, 'name'):
+                path = f'plots/{dataset.path.rsplit(sep=".", maxsplit=1)[0]}.jpg'
+                dir = os.path.dirname(path)
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
+                plt.savefig(fname=path, dpi=300)
+                plt.clf()
+            else:
+                raise Exception('Dataset has no attributes: path and name')
         else:
             plt.show()
 
