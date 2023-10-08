@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 
 
@@ -8,7 +10,9 @@ class Dataset:
             dataset.task = 'classification'
         else:
             dataset.task = 'regression'
+        dataset.dataset_name = os.path.basename(path)
         return dataset
+
 
 # if __name__ == '__main__':
 #     data = Dataset(path='datasets/projekt1/classification/data.simple.train.100.csv')
@@ -20,3 +24,5 @@ class Dataset:
 #     print(data.y[5])
 #     if data.task == 'classification':
 #         print(data.cls[6])
+#     print(type(data))
+#     print(data.data_name)
