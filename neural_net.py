@@ -16,13 +16,6 @@ import numpy as np
 # Wpływ liczby warstw ukrytych w sieci i ich liczności. Zbadać różne liczby warstw od 0 do 4, kilka różnych architektur
 # Wpływ miary błędu na wyjściu sieci na skuteczność uczenia. Sprawdzić dwie miary błędu dla klasyfikacji i dwie dla regresji.
 
-class ActivationFunction(Enum):
-    RELU = (lambda x: np.max(0, x))
-    SIGMOID = (lambda x: 1 / (1 + np.exp(-x)))
-    TANH = (lambda x: (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)))
-    BINARY_STEP = (lambda x: x)
-    LINEAR = (lambda x: 1 if x >= 0 else 0)
-
 
 class Tensor:
     def __init__(self, in_size: int, out_size: int):
@@ -33,8 +26,16 @@ class Tensor:
 
 
 class NeuralNet:
+    ACTIVATION_FUNCTION_DICT = {
+        "RELU": lambda x: x if x > 0 else 0.0,
+        "SIGMOID": lambda x: 1 / (1 + np.exp(-x)),
+        "TANH": lambda x: (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)),
+        "BINARY_STEP": lambda x: x,
+        "LINEAR": lambda x: 1 if x >= 0 else 0
+    }
 
-    def __init__(self, layers: list[int], activ_func: ActivationFunction, seed: int = 42):
+    def __init__(self, layers: list[int], activ_func: str, seed: int = 42):
+        self.activ_func = self.ACTIVATION_FUNCTION_DICT.get(activ_func, self.ACTIVATION_FUNCTION_DICT["RELU"])
         # init Tensors
         np.random.seed(seed)
         self.layers: list[Tensor] = []
@@ -49,7 +50,7 @@ class NeuralNet:
                 # Feed forward
                 for layer in self.layers:
                     out = np.append(out, 1.0)
-                    out = layer.weights.dot(out)
+                    out = np.array([self.activ_func(x) for x in layer.weights.dot(out)])
 
                 print(out)
                 # Back propagation
@@ -61,5 +62,5 @@ class NeuralNet:
 
 
 if __name__ == '__main__':
-    net = NeuralNet([3, 3, 2], ActivationFunction.RELU)
+    net = NeuralNet([3, 3, 2], "SIGMOID")
     net.train(1, [[1.0, 2.0, 3.0]])
