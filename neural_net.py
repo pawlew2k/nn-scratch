@@ -4,7 +4,7 @@
 # (w dniu oddania będzie trzeba szybko dostosować architekturę sieci)
 # wizualizacja zbioru uczącego i efektów klasyfikacji oraz regresji - (raczej matplotlib)
 # wizualizacja błędu propagowanego w kolejnych iteracjach uczenia (na każdej z wag) (raczej matplotlib)
-# wizualizacja wartości wag w kolejnych iteracjach uczenia
+# wizualizacja wartości wag w kolejnych iteracjach uczenia (może networkx)
 from enum import Enum
 
 import numpy as np
