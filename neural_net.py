@@ -24,6 +24,10 @@ class Tensor:
         self.weights = np.random.randn(out_size, in_size + 1) * weight_heuristic
         # self.bias = np.random.random(out_size) * weight_heuristic
 
+    def __str__(self):
+        W = self.weights
+        return '\n'.join([f'W_{i}={W[:-1, i]}, b_{i}={W[-1, i]}' for i in range(len(W))])
+
 
 class NeuralNet:
     ACTIVATION_FUNCTION_DICT = {
@@ -42,6 +46,12 @@ class NeuralNet:
         for i in range(1, len(layers)):
             self.layers.append(Tensor(layers[i - 1], layers[i]))
 
+    def __str__(self):
+        layers = []
+        for i, layer in enumerate(self.layers):
+            layers.append(f'Layer_{i}:\n{str(layer)}\n')
+        return ''.join(layers)
+
     def train(self, epochs: int, training_data: list[list[float]]):
         for _ in range(epochs):
             for inputs in training_data:
@@ -52,7 +62,7 @@ class NeuralNet:
                     out = np.append(out, 1.0)
                     out = np.array([self.activ_func(x) for x in layer.weights.dot(out)])
 
-                print(out)
+                # print(out)
                 # Back propagation
                 # TODO: implement back propagation after 2nd lecture
 
@@ -64,3 +74,4 @@ class NeuralNet:
 if __name__ == '__main__':
     net = NeuralNet([3, 3, 2], "SIGMOID")
     net.train(1, [[1.0, 2.0, 3.0]])
+    # print(net)
