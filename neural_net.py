@@ -25,8 +25,15 @@ class Tensor:
         # self.bias = np.random.random(out_size) * weight_heuristic
 
     def __str__(self):
-        W = self.weights
-        return '\n'.join([f'W_{i}={W[:-1, i]}, b_{i}={W[-1, i]}' for i in range(len(W))])
+        W = self.get_weights()
+        B = self.get_biases()
+        return '\n'.join([f'W_{i}={W[i]}, b_{i}={B[i]}' for i in range(W.shape[0])])
+
+    def get_weights(self):
+        return self.weights[:, :-1]
+
+    def get_biases(self):
+        return self.weights[:, -1]
 
 
 class NeuralNet:
@@ -40,13 +47,14 @@ class NeuralNet:
 
     ACTIVATION_FUNCTION_DERIVATIVE_DICT = {
         "RELU": lambda x: x if 1 > 0 else 0.0,
-        "SIGMOID": lambda x: np.exp(-x) / (1 + np.exp(-x))**2,
-        "TANH": lambda x: 4 / (np.exp(x) + np.exp(-x))**2,
+        "SIGMOID": lambda x: np.exp(-x) / (1 + np.exp(-x)) ** 2,
+        "TANH": lambda x: 4 / (np.exp(x) + np.exp(-x)) ** 2,
         "LINEAR": lambda x: 1,
         "BINARY_STEP": lambda x: 0
     }
 
     def __init__(self, layers: list[int], activ_func: str, seed: int = 42):
+        self.net_structure = layers
         self.activ_func = self.ACTIVATION_FUNCTION_DICT.get(activ_func, self.ACTIVATION_FUNCTION_DICT["RELU"])
         # init Tensors
         np.random.seed(seed)
@@ -57,7 +65,10 @@ class NeuralNet:
     def __str__(self):
         layers = []
         for i, layer in enumerate(self.layers):
+            # print(type(layer))
+            # print(layer.weights, 'xxxxxxxxx')
             layers.append(f'Layer_{i}:\n{str(layer)}\n')
+            # print(layer, '-------')
         return ''.join(layers)
 
     def train(self, epochs: int, training_data: list[list[float]]):
