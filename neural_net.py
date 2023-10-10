@@ -34,8 +34,16 @@ class NeuralNet:
         "RELU": lambda x: x if x > 0 else 0.0,
         "SIGMOID": lambda x: 1 / (1 + np.exp(-x)),
         "TANH": lambda x: (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)),
-        "BINARY_STEP": lambda x: x,
-        "LINEAR": lambda x: 1 if x >= 0 else 0
+        "LINEAR": lambda x: x,
+        "BINARY_STEP": lambda x: 1 if x >= 0 else 0
+    }
+
+    ACTIVATION_FUNCTION_DERIVATIVE_DICT = {
+        "RELU": lambda x: x if 1 > 0 else 0.0,
+        "SIGMOID": lambda x: np.exp(-x) / (1 + np.exp(-x))**2,
+        "TANH": lambda x: 4 / (np.exp(x) + np.exp(-x))**2,
+        "LINEAR": lambda x: 1,
+        "BINARY_STEP": lambda x: 0
     }
 
     def __init__(self, layers: list[int], activ_func: str, seed: int = 42):
