@@ -17,8 +17,9 @@ import numpy as np
 # Wpływ miary błędu na wyjściu sieci na skuteczność uczenia. Sprawdzić dwie miary błędu dla klasyfikacji i dwie dla regresji.
 
 
-class Tensor:
+class Layer:
     def __init__(self, in_size: int, out_size: int):
+        self.perceptron_values = np.zeros(out_size)
         weight_heuristic = np.sqrt(2 / (in_size + out_size))
         # bias as last value in weights => [weights, bias]
         self.weights = np.random.randn(out_size, in_size + 1) * weight_heuristic
@@ -30,29 +31,14 @@ class Tensor:
 
 
 class NeuralNet:
-    ACTIVATION_FUNCTION_DICT = {
-        "RELU": lambda x: x if x > 0 else 0.0,
-        "SIGMOID": lambda x: 1 / (1 + np.exp(-x)),
-        "TANH": lambda x: (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)),
-        "LINEAR": lambda x: x,
-        "BINARY_STEP": lambda x: 1 if x >= 0 else 0
-    }
-
-    ACTIVATION_FUNCTION_DERIVATIVE_DICT = {
-        "RELU": lambda x: x if 1 > 0 else 0.0,
-        "SIGMOID": lambda x: np.exp(-x) / (1 + np.exp(-x))**2,
-        "TANH": lambda x: 4 / (np.exp(x) + np.exp(-x))**2,
-        "LINEAR": lambda x: 1,
-        "BINARY_STEP": lambda x: 0
-    }
-
     def __init__(self, layers: list[int], activ_func: str, seed: int = 42):
         self.activ_func = self.ACTIVATION_FUNCTION_DICT.get(activ_func, self.ACTIVATION_FUNCTION_DICT["RELU"])
+        self.activ_func_d = self.ACTIVATION_FUNCTION_DERIVATIVE_DICT.get(activ_func, self.ACTIVATION_FUNCTION_DERIVATIVE_DICT["RELU"])
         # init Tensors
         np.random.seed(seed)
-        self.layers: list[Tensor] = []
+        self.layers: list[Layer] = []
         for i in range(1, len(layers)):
-            self.layers.append(Tensor(layers[i - 1], layers[i]))
+            self.layers.append(Layer(layers[i - 1], layers[i]))
 
     def __str__(self):
         layers = []
@@ -69,10 +55,12 @@ class NeuralNet:
                 for layer in self.layers:
                     out = np.append(out, 1.0)
                     out = np.array([self.activ_func(x) for x in layer.weights.dot(out)])
+                    layer.perceptron_values = out
 
                 # print(out)
                 # Back propagation
                 # TODO: implement back propagation after 2nd lecture
+
 
     def predict(self, data: list[list[float]]):
         # predict the outcome
