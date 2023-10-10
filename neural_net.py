@@ -31,7 +31,8 @@ class Layer:
 
     def __str__(self):
         w = self.weights
-        return '\n'.join([f'W_{i}={w[:-1, i]}, b_{i}={w[-1, i]}' for i in range(len(w))])
+        b = self.get_biases()
+        return '\n'.join([f'W_{i}={W[i]}, b_{i}={b[i]}' for i in range(w.shape[0])])
 
 
 class NeuralNet:
@@ -46,7 +47,10 @@ class NeuralNet:
     def __str__(self):
         layers = []
         for i, layer in enumerate(self.layers):
+            # print(type(layer))
+            # print(layer.weights, 'xxxxxxxxx')
             layers.append(f'Layer_{i}:\n{str(layer)}\n')
+            # print(layer, '-------')
         return ''.join(layers)
 
     def train(self, epochs: int, training_data: list[list[float]]):
@@ -64,7 +68,7 @@ class NeuralNet:
                 # Back propagation
                 # TODO: implement back propagation after 2nd lecture
 
-                w = w - self.learning_rate * gradient(w)
+                #w = w - self.learning_rate * gradient(w)
 
     def predict(self, data: list[list[float]]):
         # predict the outcome
