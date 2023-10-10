@@ -5,9 +5,10 @@
 # wizualizacja zbioru uczącego i efektów klasyfikacji oraz regresji - (raczej matplotlib)
 # wizualizacja błędu propagowanego w kolejnych iteracjach uczenia (na każdej z wag) (raczej matplotlib)
 # wizualizacja wartości wag w kolejnych iteracjach uczenia (może networkx)
-from enum import Enum
 
 import numpy as np
+
+from nn_functions import ACTIVATION_FUNCTION_DICT, ACTIVATION_FUNCTION_DERIVATIVE_DICT
 
 
 # Elementy do zbadania
@@ -18,7 +19,10 @@ import numpy as np
 
 
 class Layer:
-    def __init__(self, in_size: int, out_size: int):
+    def __init__(self, in_size: int, out_size: int, activ_func: str):
+        self.activ_func = ACTIVATION_FUNCTION_DICT.get(activ_func, ACTIVATION_FUNCTION_DICT["RELU"])
+        self.activ_func_d = ACTIVATION_FUNCTION_DERIVATIVE_DICT.get(activ_func,
+                                                                    ACTIVATION_FUNCTION_DERIVATIVE_DICT["RELU"])
         self.perceptron_values = np.zeros(out_size)
         weight_heuristic = np.sqrt(2 / (in_size + out_size))
         # bias as last value in weights => [weights, bias]
@@ -26,19 +30,18 @@ class Layer:
         # self.bias = np.random.random(out_size) * weight_heuristic
 
     def __str__(self):
-        W = self.weights
-        return '\n'.join([f'W_{i}={W[:-1, i]}, b_{i}={W[-1, i]}' for i in range(len(W))])
+        w = self.weights
+        return '\n'.join([f'W_{i}={w[:-1, i]}, b_{i}={w[-1, i]}' for i in range(len(w))])
 
 
 class NeuralNet:
-    def __init__(self, layers: list[int], activ_func: str, seed: int = 42):
-        self.activ_func = self.ACTIVATION_FUNCTION_DICT.get(activ_func, self.ACTIVATION_FUNCTION_DICT["RELU"])
-        self.activ_func_d = self.ACTIVATION_FUNCTION_DERIVATIVE_DICT.get(activ_func, self.ACTIVATION_FUNCTION_DERIVATIVE_DICT["RELU"])
+    def __init__(self, layers: list[(int, str)], rate: float = 0.1, seed: int = 42):
+        self.learning_rate = rate
         # init Tensors
         np.random.seed(seed)
         self.layers: list[Layer] = []
         for i in range(1, len(layers)):
-            self.layers.append(Layer(layers[i - 1], layers[i]))
+            self.layers.append(Layer(layers[i - 1][0], layers[i][0], layers[i][1]))
 
     def __str__(self):
         layers = []
@@ -54,13 +57,14 @@ class NeuralNet:
                 # Feed forward
                 for layer in self.layers:
                     out = np.append(out, 1.0)
-                    out = np.array([self.activ_func(x) for x in layer.weights.dot(out)])
+                    out = layer.activ_func(layer.weights.dot(out))
                     layer.perceptron_values = out
 
                 # print(out)
                 # Back propagation
                 # TODO: implement back propagation after 2nd lecture
 
+                w = w - self.learning_rate * gradient(w)
 
     def predict(self, data: list[list[float]]):
         # predict the outcome
@@ -68,6 +72,6 @@ class NeuralNet:
 
 
 if __name__ == '__main__':
-    net = NeuralNet([3, 3, 2], "SIGMOID")
+    net = NeuralNet([(3, ""), (3, "RELU"), (1, "RELU")])
     net.train(1, [[1.0, 2.0, 3.0]])
     # print(net)

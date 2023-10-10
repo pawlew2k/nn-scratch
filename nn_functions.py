@@ -1,31 +1,45 @@
+from typing import Callable
+
 import numpy as np
 
 
-def softmax(output: np.ndarray):
-    exps = np.exp(output)
+def relu(arr: np.ndarray):
+    return np.array([x if x > 0 else 0.0 for x in arr])
+
+
+def sigmoid(arr: np.ndarray):
+    return np.array([1 / (1 + np.exp(-x)) for x in arr])
+
+
+def tanh(arr: np.ndarray):
+    return np.array([(np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)) for x in arr])
+
+
+def binary_step(arr: np.ndarray):
+    return np.array([1 if x >= 0 else 0 for x in arr])
+
+
+def softmax(arr: np.ndarray):
+    exps = np.exp(arr)
     return exps / np.sum(exps)
 
 
-ACTIVATION_FUNCTION_DICT = {
-    "RELU": lambda x: x if x > 0 else 0.0,
-    "SIGMOID": lambda x: 1 / (1 + np.exp(-x)),
-    "TANH": lambda x: (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)),
+ACTIVATION_FUNCTION_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
+    "RELU": lambda x: relu(x),
+    "SIGMOID": lambda x: sigmoid(x),
+    "TANH": lambda x: tanh(x),
     "LINEAR": lambda x: x,
-    "BINARY_STEP": lambda x: 1 if x >= 0 else 0,
+    "BINARY_STEP": lambda x: binary_step(x),
     "SOFTMAX": lambda x: softmax(x)
 }
 
-def softmax_derivative(x, i, j):
-    if i == j:
-        return np.exp()
-
 ACTIVATION_FUNCTION_DERIVATIVE_DICT = {
-    "RELU": lambda x: x if 1 > 0 else 0.0,
+    "RELU": lambda x: 1.0 if 1 > 0 else 0.0,
     "SIGMOID": lambda x: np.exp(-x) / (1 + np.exp(-x)) ** 2,
     "TANH": lambda x: 4 / (np.exp(x) + np.exp(-x)) ** 2,
-    "LINEAR": lambda x: 1,
-    "BINARY_STEP": lambda x: 0,
-    "SOFTMAX": lambda x, i, j:
+    "LINEAR": lambda x: 1.0,
+    "BINARY_STEP": lambda x: 0.0,
+    "SOFTMAX": lambda x:
 }
 
 REGRESSION_LOSS_FUNCTION_DICT = {
@@ -41,7 +55,7 @@ REGRESSION_LOSS_FUNCTION_DERIVATIVE_DICT = {
 }
 
 CLASSIFICATION_LOSS_FUNCTION_DICT = {
-    "CROSS_ENTROPY": lambda target, actual: np.sum([t * np.log(a) for t, a in zip(target, actual)])
+    "CROSS_ENTROPY": lambda target, actual: -np.sum([t * np.log(a) for t, a in zip(target, actual)])
 }
 
 CLASSIFICATION_LOSS_FUNCTION_DERIVATIVE_DICT = {
