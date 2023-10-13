@@ -45,47 +45,48 @@ ACTIVATION_FUNCTION_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
     "SOFTMAX": lambda x: softmax(x)
 }
 
+
 def relu_derivative(arr: np.ndarray):
     return np.array([1.0 if x > 0 else 0.0 for x in arr])
 
 
 def sigmoid_derivative(arr: np.ndarray):
-    return np.array([np.exp(-x) / (1 + np.exp(-x)) ** 2 for x in arr])
+    sigma = sigmoid(arr)
+    return sigma * (1 - sigma)
 
 
 def tanh_derivative(arr: np.ndarray):
-    return np.array([4 / (np.exp(x) + np.exp(-x)) ** 2 for x in arr])
+    tanh_x = tanh(arr)
+    return 1 - tanh_x ** 2
 
 
 def softmax_derivative(arr: np.ndarray):
-    return np.array([softmax(x)(1 - softmax(x)) for x in arr])
+    return np.array([softmax(x) * (1 - softmax(x)) for x in arr])
 
 
 ACTIVATION_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
     "RELU": lambda x: relu_derivative(x),
     "SIGMOID": lambda x: sigmoid_derivative(x),
     "TANH": lambda x: tanh_derivative(x),
-    "LINEAR": lambda x: np.array([1.0 for _ in x]),
-    "BINARY_STEP": lambda x: np.array([0.0 for _ in x]),
+    "LINEAR": lambda x: np.ones(len(x)),
+    "BINARY_STEP": lambda x: np.zeros(len(x)),
     "SOFTMAX": lambda x: softmax_derivative(x)
 }
 
 LOSS_FUNCTION_DICT: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
     # MEAN SQUARED ERROR
-    "MSE": lambda target, actual: np.sum([((t - a) ** 2) / 2 for t, a in zip(target, actual)]),
+    "MSE": lambda actual, target: np.sum(((actual - target) ** 2) / (len(actual))),
     # MEAN ABSOLUTE ERROR
-    "MAE": lambda target, actual: np.sum([np.abs(t - a) for t, a in zip(target, actual)]),
-    "CROSS_ENTROPY": lambda target, actual: -np.sum([t * np.log(a) for t, a in zip(target, actual)]),
+    "MAE": lambda actual, target: np.sum((np.abs(actual - target)) / (len(actual))),
+    "CROSS_ENTROPY": lambda actual, target: -np.sum(actual * np.log2(target)),
     # NEGATIVE LOG LIKELIHOOD
-    "NLL": lambda target, actual: -np.sum(
-        [t * np.log(a) + (1 - t) * np.log(1 - a) for t, a in zip(target, actual)])
+    "NLL": lambda actual: 1 - np.max(np.log(actual))
 }
 
 LOSS_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray, np.ndarray], np.ndarray]] = {
     "MSE": lambda target, actual: target - actual,
     "MAE": lambda target, actual: np.ndarray([1 if a > t else -1 for t, a in zip(target, actual)]),
     "CROSS_ENTROPY": lambda target, actual: np.ndarray([-t / a for t, a in zip(target, actual)]),
-    "NLL": lambda target, actual: np.ndarray([(a - t) / (a - a ** 2) for t, a in zip(target, actual)])
 }
 
 
