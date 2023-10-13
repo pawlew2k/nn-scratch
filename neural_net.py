@@ -26,19 +26,19 @@ class Layer:
                                                                         ACTIVATION_FUNCTION_DERIVATIVE_DICT["RELU"])
 
         ## bias as last value in weights => [weights, bias]
-        weight_heuristic = WEIGHT_HEURISTICS.get(activ_func, WEIGHT_HEURISTICS["RELU"])
-        self.weights = np.random.randn(in_size + 1, out_size) * weight_heuristic(in_size, out_size)
+        # weight_heuristic = WEIGHT_HEURISTICS.get(activ_func, WEIGHT_HEURISTICS["RELU"])
+        # self.weights = np.random.randn(in_size + 1, out_size) * weight_heuristic(in_size, out_size)
 
         ### TESTING DATA
-        # if out_size == 2:
-        #     weights = np.array([[1.0, 3.0], [2.0, 4.0], [5.0, 6.0]])
-        # else:
-        #     weights = np.array([[2.0], [1.0], [3.0]])
-        #
-        # self.weights = weights
+        if out_size == 2:
+            weights = np.array([[1.0, 3.0], [2.0, 4.0], [5.0, 6.0]])
+        else:
+            weights = np.array([[2.0], [1.0], [3.0]])
+
+        self.weights = weights
 
         # output before activation function
-        self.before_activation = np.zeros(in_size)
+        self.before_activation = np.zeros(out_size)
         # output after activation function
         self.outputs = np.zeros(out_size)
 
@@ -80,7 +80,7 @@ class NeuralNet:
     def train(self, epochs: int, training_data: list[list[float]], target_values: list[list[float]]):
         for epoch in range(epochs):
             for (inputs, target) in zip(training_data, target_values):
-                out = np.array(inputs)
+                out = np.atleast_2d(inputs)
 
                 # Feed forward
                 for layer in self.layers:
@@ -97,20 +97,33 @@ class NeuralNet:
                 print(f"loss on epoch {epoch}: {loss}")
 
                 loss_derivative = self.loss_deriv(np.array(target), out)
-                deriv = self.layers[-1].activ_func_deriv(self.layers[-1].before_activation)
+                deriv = self.layers[-1].activ_func_deriv(self.layers[-1].outputs)
                 self.layers[-1].delta = loss_derivative * deriv
-                outputs_T = self.layers[-1].outputs.T
-                dotted = outputs_T.dot(self.layers[-1].delta)
+
+                # weight change
+                layer_input = np.array(inputs)
+                if len(self.layers) > 1:
+                    layer_input = self.layers[-2].outputs
+                layer_input = np.append(layer_input, 1.0)
+                layer_input = layer_input.T
+                d_ = self.layers[-1].delta
+                dotted = layer_input.dot(d_)
                 change = self.learning_rate * dotted
                 self.layers[-1].weights -= change
 
                 for i in range(len(self.layers) - 2, -1, -1):
-                    weights_t = self.layers[i].weights.T
+                    weights_t = self.layers[i + 1].weights.T
                     delta_prev_layer = self.layers[i + 1].delta
                     dot = delta_prev_layer.dot(weights_t)
-                    self.layers[i].delta = dot * self.layers[i].activ_func_deriv(self.layers[i].before_activation) # TODO: tutaj cos nie dziala nadal
+                    self.layers[i].delta = dot * self.layers[i].activ_func_deriv(self.layers[i].outputs)
 
-                    self.layers[i].weights -= self.learning_rate * self.layers[i].outputs.T.dot(self.layers[i].delta)
+                    layer_input = inputs
+                    if i != 0:
+                        layer_input = self.layers[i-1].outputs
+
+                    layer_input = layer_input.T
+
+                    self.layers[i].weights -= self.learning_rate * layer_input.dot(self.layers[i].delta)
 
     def predict(self, data: list[list[float]]):
         # predict the outcome
@@ -118,10 +131,11 @@ class NeuralNet:
 
 
 if __name__ == '__main__':
-    net = NeuralNet([(3, ""), (2, "LINEAR"), (1, "LINEAR")], "MSE")
-    net.train(1, [[1.0, 2.0, 3.0]], [[1.0]])
+    # net = NeuralNet([(3, ""), (2, "LINEAR"), (1, "LINEAR")], "MSE")
+    # net.train(1, [[1.0, 2.0, 3.0]], [[1.0]])
 
     ### TESTING DATA
-    # net = NeuralNet([(2, ""), (2, "LINEAR"), (1, "LINEAR")], "MSE")
-    # net.train(1, [[10, 20]], [[1.0]])
+    net = NeuralNet([(2, ""), (2, "LINEAR"), (1, "LINEAR")], "MSE")
+    # net = NeuralNet([(2, ""), (2, "LINEAR")], "MSE")
+    net.train(1, [[10, 20]], [[1.0]])
     print(net)
