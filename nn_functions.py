@@ -20,11 +20,11 @@ def relu(arr: np.ndarray):
 
 
 def sigmoid(arr: np.ndarray):
-    return np.array([1 / (1 + np.exp(-x)) for x in arr])
+    return 1 / (1 + np.exp(-arr))
 
 
 def tanh(arr: np.ndarray):
-    return np.array([(np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)) for x in arr])
+    return (np.exp(arr) - np.exp(-arr)) / (np.exp(arr) + np.exp(-arr))
 
 
 def binary_step(arr: np.ndarray):
@@ -51,19 +51,18 @@ def relu_derivative(arr: np.ndarray):
 
 
 def sigmoid_derivative(arr: np.ndarray):
-    sigma = sigmoid(arr)
-    return sigma * (1 - sigma)
+    return arr * (1 - arr)
 
 
 def tanh_derivative(arr: np.ndarray):
-    tanh_x = tanh(arr)
-    return 1 - tanh_x ** 2
+    return 1 - arr ** 2
 
 
 def softmax_derivative(arr: np.ndarray):
-    return np.array([softmax(x) * (1 - softmax(x)) for x in arr])
+    return arr * (1 - arr)
 
 
+# input to activation function derivative is the output of layer (sums that went through activation function)
 ACTIVATION_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
     "RELU": lambda x: relu_derivative(x),
     "SIGMOID": lambda x: sigmoid_derivative(x),
