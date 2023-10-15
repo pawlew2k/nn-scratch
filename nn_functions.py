@@ -2,21 +2,24 @@ from typing import Callable
 
 import numpy as np
 
-# constant function names
+# ACTIVATION FUNCTION NAMES
 RELU = "RELU"
 SIGMOID = "SIGMOID"
 TANH = "TANH"
 LINEAR = "LINEAR"
 BINARY_STEP = "BINARY_STEP"
 SOFTMAX = "SOFTMAX"
+
+# ERROR FUNCTION NAMES
 MSE = "MSE"
+MSLE = "MSLE"
 MAE = "MAE"
 CROSS_ENTROPY = "CROSS_ENTROPY"
 NLL = "NLL"
 
 
 def relu(arr: np.ndarray):
-    return np.array([x if x > 0 else 0.0 for x in arr])
+    return arr * (arr > 0)
 
 
 def sigmoid(arr: np.ndarray):
@@ -28,7 +31,7 @@ def tanh(arr: np.ndarray):
 
 
 def binary_step(arr: np.ndarray):
-    return np.array([1 if x >= 0 else 0 for x in arr])
+    return 1. * (arr > 0)
 
 
 def softmax(arr: np.ndarray):
@@ -47,7 +50,7 @@ ACTIVATION_FUNCTION_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
 
 
 def relu_derivative(arr: np.ndarray):
-    return np.array([1.0 if x > 0 else 0.0 for x in arr])
+    return 1. * (arr > 0)
 
 
 def sigmoid_derivative(arr: np.ndarray):
@@ -67,34 +70,53 @@ ACTIVATION_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray], np.ndarray
     "RELU": lambda x: relu_derivative(x),
     "SIGMOID": lambda x: sigmoid_derivative(x),
     "TANH": lambda x: tanh_derivative(x),
-    "LINEAR": lambda x: np.ones(len(x)),
-    "BINARY_STEP": lambda x: np.zeros(len(x)),
+    "LINEAR": lambda x: np.ones_like(x),
+    "BINARY_STEP": lambda x: np.zeros_like(x),
     "SOFTMAX": lambda x: softmax_derivative(x)
 }
 
 LOSS_FUNCTION_DICT: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
+    # LOSS FUNCTIONS FOR REGRESSION
     # MEAN SQUARED ERROR
-    "MSE": lambda actual, target: np.sum(((actual - target) ** 2) / (len(actual))),
+    "MSE": lambda target, actual: 0.5 * np.sum((target - actual) ** 2),
     # MEAN ABSOLUTE ERROR
-    "MAE": lambda actual, target: np.sum((np.abs(actual - target)) / (len(actual))),
-    "CROSS_ENTROPY": lambda actual, target: -np.sum(actual * np.log2(target)),
+    "MAE": lambda target, actual: np.sum(np.abs(actual - target)),
+    # MEAN SQUARED LOGARITHMIC ERROR
+    "MSLE": lambda target, actual: 0.5 * np.sum((np.log(target + 1) - np.log(actual + 1)) ** 2),
+    # LOSS FUNCTIONS FOR CLASSIFICATION
+    "CROSS_ENTROPY": lambda target, actual: -np.sum(target * np.log(actual)),
     # NEGATIVE LOG LIKELIHOOD
-    "NLL": lambda actual: 1 - np.max(np.log(actual))
+    "NLL": lambda target, actual: -np.sum(target * np.log(actual))
 }
 
+
+def cross_entropy_derivative(target, actual):
+    result = -target / actual
+    return result
+
+
+def mae_derivative(target, actual):
+    return np.where(actual - target > 0, 1, -1)
+
+
+def msle_derivative(target, actual):
+    return (np.log(actual) - np.log(target + 1)) / (actual + 1)
+
+
 LOSS_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray, np.ndarray], np.ndarray]] = {
-    "MSE": lambda target, actual: target - actual,
-    "MAE": lambda target, actual: np.ndarray([1 if a > t else -1 for t, a in zip(target, actual)]),
-    "CROSS_ENTROPY": lambda target, actual: np.ndarray([-t / a for t, a in zip(target, actual)]),
+    "MSE": lambda target, actual: actual - target,
+    "MAE": lambda target, actual: mae_derivative(target, actual),
+    "MSLE": lambda target, actual: msle_derivative(target, actual),
+    "CROSS_ENTROPY": lambda target, actual: cross_entropy_derivative(target, actual)
 }
 
 
 def xavier_normalized_heuristic(in_size, out_size):
-    return np.sqrt(6 / (in_size + out_size + 2))
+    return np.sqrt(6 / (in_size + out_size))
 
 
 def he_heuristic(in_size):
-    return np.sqrt(2 / (in_size + 1))
+    return np.sqrt(2 / in_size)
 
 
 WEIGHT_HEURISTICS: dict[str, Callable[[int, int], float]] = {
