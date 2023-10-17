@@ -111,6 +111,10 @@ LOSS_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray, np.ndarray], np.n
 }
 
 
+def xavier_heuristic(in_size):
+    return 1 / np.sqrt(in_size)
+
+
 def xavier_normalized_heuristic(in_size, out_size):
     return np.sqrt(6 / (in_size + out_size))
 
@@ -121,9 +125,9 @@ def he_heuristic(in_size):
 
 WEIGHT_HEURISTICS: dict[str, Callable[[int, int], float]] = {
     "RELU": lambda in_size, out_size: he_heuristic(in_size),
-    "SIGMOID": lambda in_size, out_size: xavier_normalized_heuristic(in_size, out_size),
-    "TANH": lambda in_size, out_size: xavier_normalized_heuristic(in_size, out_size),
-    "LINEAR": lambda in_size, out_size: xavier_normalized_heuristic(in_size, out_size),
-    "BINARY_STEP": lambda in_size, out_size: xavier_normalized_heuristic(in_size, out_size),
-    "SOFTMAX": lambda in_size, out_size: xavier_normalized_heuristic(in_size, out_size)
+    "SIGMOID": lambda in_size, out_size: xavier_heuristic(in_size),
+    "TANH": lambda in_size, out_size: xavier_heuristic(in_size),
+    "LINEAR": lambda in_size, out_size: he_heuristic(in_size),
+    "BINARY_STEP": lambda in_size, out_size: xavier_heuristic(in_size),
+    "SOFTMAX": lambda in_size, out_size: xavier_heuristic(in_size)
 }

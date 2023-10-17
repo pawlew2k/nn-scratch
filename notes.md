@@ -17,3 +17,9 @@
 https://medium.com/@sami.benbrahim/gradient-descent-from-scratch-an-overview-of-gd-variants-f558da269a5f
 
 - we have chosen stochastic (SGD) for 1st task
+
+## Exploding gradient problem in regression
+
+we have encountered a exploding gradient problem that resulted in NaN values in loss
+
+-> it can be resolved by scaling input/output models to min-max normalized (for sigmoid) or z-score normalized (for tanh)

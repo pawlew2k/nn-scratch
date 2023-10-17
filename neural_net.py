@@ -11,7 +11,7 @@ import numpy as np
 
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, explained_variance_score
 from sklearn import datasets
 
 from dataset import Dataset
@@ -34,26 +34,17 @@ class Layer:
                                                                         ACTIVATION_FUNCTION_DERIVATIVE_DICT["RELU"])
 
         ## bias as last value in weights => [weights, bias]
-        # weight_heuristic = WEIGHT_HEURISTICS.get(activ_func, WEIGHT_HEURISTICS["RELU"])
+        weight_heuristic = WEIGHT_HEURISTICS.get(activ_func, WEIGHT_HEURISTICS["RELU"])(in_size, out_size)
         self.weights = np.random.randn(in_size + 1,
                                        out_size + (0 if is_last else 1))  # * weight_heuristic(in_size, out_size)
+
+        ### V2 biases as another array
+        # self.weights = np.random.randn(in_size,
+        #                                out_size)
         # self.biases = np.random.randn(1, out_size) #* weight_heuristic(in_size, out_size)
-        self.weights /= np.sqrt(in_size)
         # self.biases /= np.sqrt(in_size)
 
-        # ### TESTING DATA
-        # if out_size == 2:
-        #     weights = np.array([[1.0, 3.0], [2.0, 4.0]])
-        #     biases = np.array([[5.0, 6.0]])
-        # else:
-        #     weights = np.array([[2.0], [1.0]])
-        #     biases = np.array([[3.0]])
-        #
-        # self.weights = weights
-        #
-        # self.biases = biases
-        #
-        # ### END OF TESTING DATA
+        self.weights *= weight_heuristic
 
         # output after activation function
         self.outputs = np.zeros(out_size)
@@ -75,11 +66,12 @@ class Layer:
 
 
 class NeuralNet:
-    def __init__(self, layers: list[(int, str)], loss_func: str, rate: float = 0.001, seed: int = 42):
-        self.learning_rate = rate
+    def __init__(self, layers: list[(int, str)], loss_func: str, seed: int = 42, gradient_normalization=True):
+        self.learning_rate = 0.001
+        self.gradient_normalization = gradient_normalization
         self.loss = LOSS_FUNCTION_DICT.get(loss_func, LOSS_FUNCTION_DICT["MSE"])
         self.loss_deriv = LOSS_FUNCTION_DERIVATIVE_DICT.get(loss_func, LOSS_FUNCTION_DERIVATIVE_DICT["MSE"])
-        # init Tensors
+        # init Layers
         np.random.seed(seed)
         self.layers: list[Layer] = []
         for i in range(1, len(layers)):
@@ -94,8 +86,10 @@ class NeuralNet:
             # print(layer, '-------')
         return ''.join(layers)
 
-    def train(self, training_data, target_values, epochs: int = 1000):
-        displayUpdate = 100
+    def train(self, training_data, target_values, epochs: int = 1000, learning_rate=0.001, dynamic_learning_rate=False,
+              learning_rate_decrease_speed=5000, display_update=10):
+
+        self.learning_rate = learning_rate
         training_data = np.c_[training_data, np.ones((training_data.shape[0]))]
 
         for epoch in range(epochs):
@@ -128,10 +122,21 @@ class NeuralNet:
                     layer_input = self.layers[-2].outputs
                 layer_input = np.atleast_2d(layer_input).T
                 d_ = np.atleast_2d(self.layers[-1].delta)
-                dotted = layer_input.dot(d_)
-                change = self.learning_rate * dotted
+                gradient = layer_input.dot(d_)
+
+                if self.gradient_normalization:
+                    np.clip(gradient, -1, 1, gradient)
+                    # normalization = np.linalg.norm(gradient, axis=0, keepdims=True)
+                    # gradient /= normalization
+
+                change = self.learning_rate * gradient
                 new_weights = self.layers[-1].weights - change
                 self.layers[-1].weights = new_weights
+
+                # # bias change
+                # bias_change = self.learning_rate * self.layers[-1].delta
+                # new_biases = self.layers[-1].biases - bias_change
+                # self.layers[-1].biases = new_biases
 
                 for i in range(len(self.layers) - 2, -1, -1):
                     weights_t = self.layers[i + 1].weights.T
@@ -146,15 +151,29 @@ class NeuralNet:
 
                     layer_input = np.atleast_2d(layer_input).T
 
-                    self.layers[i].weights -= self.learning_rate * layer_input.dot(np.atleast_2d(self.layers[i].delta))
+                    gradient = layer_input.dot(np.atleast_2d(self.layers[i].delta))
+
+                    if self.gradient_normalization:
+                        np.clip(gradient, -1, 1, gradient)
+                        # normalization = np.linalg.norm(gradient, axis=0, keepdims=True)
+                        # gradient /= normalization
+
+                    weight_change = self.learning_rate * gradient
+                    self.layers[i].weights -= weight_change
+
+                    # # bias change
                     # bias_change = self.learning_rate * self.layers[i].delta
                     # new_biases = self.layers[i].biases - bias_change
                     # self.layers[i].biases = new_biases
 
-            if epoch == 0 or (epoch + 1) % displayUpdate == 0:
+            # should decrease learning rate when further down the calculations
+            if dynamic_learning_rate:  # and self.learning_rate > 0.0004:
+                self.learning_rate /= (1 + epoch / learning_rate_decrease_speed)
+
+            if epoch == 0 or (epoch + 1) % display_update == 0:
                 loss = self.calculate_loss(training_data, target_values)
-                print("[INFO] epoch={}, loss={:.7f}".format(
-                    epoch + 1, loss))
+                print("[INFO] epoch={}, loss={:.7f}, rate={:.7f}".format(
+                    epoch + 1, loss, self.learning_rate))
 
     def predict(self, x, bias=True):
         p = np.atleast_2d(x)
@@ -177,62 +196,83 @@ class NeuralNet:
         return loss
 
 
-# if __name__ == '__main__':
-#     # net = NeuralNet([(3, ""), (2, "LINEAR"), (1, "LINEAR")], "MSE")
-#     # net.train(1, [[1.0, 2.0, 3.0]], [[1.0]])
-#
-#     ### TESTING DATA
-#     # net = NeuralNet([(2, ""), (2, "LINEAR"), (1, "LINEAR")], "MSE")
-#     # net = NeuralNet([(2, ""), (2, "LINEAR")], "MSE")
-#
-#     net = NeuralNet([(1, ""), (4, "SIGMOID"), (4, "SIGMOID"), (1, "SIGMOID")], "MSE")
-#     # X = [[0, 0], [0, 1], [1, 0], [1, 1]]
-#     # y = [[0], [1], [1], [0]]
-#     # X = [[0, 1]]
-#     # y = [[1]]
-#
-#     data = Dataset(path='datasets/projekt1/regression/data.cube.test.100.csv')
-#     data = data.to_numpy()
-#     # X = np.atleast_2d(data[:, 0]).T
-#     # y = np.atleast_2d(data[:, 1]).T
-#
-#     X = [[-5.], [-4.99, ], [-4.98], [-4.97]]
-#     y = [[-1253], [-1247.368296], [-1241.753168], [-1236.154592]]
-#
-#     net.train(10000, X, y)
-#     print(net)
+def reverse_min_max_normalize(normalized_data: np.ndarray, input_data: np.ndarray):
+    data = normalized_data.copy()
+    min_val = np.min(input_data)
+    max_val = np.max(input_data)
+    return data * (max_val - min_val) + min_val
+
+
+def min_max_normalize(input_data: np.ndarray, min_val, max_val):
+    data = input_data.copy()
+    return (data - min_val) / (max_val - min_val)
+
+
+def z_score_normalize(data: np.ndarray):
+    mean = np.mean(data)
+    std_dev = np.std(data)
+    standardized_data = (data - mean) / std_dev
+    return standardized_data
+
+
+def regression():
+    # net = NeuralNet([(3, ""), (2, "LINEAR"), (1, "LINEAR")], "MSE")
+    # net.train(1, [[1.0, 2.0, 3.0]], [[1.0]])
+
+    ### TESTING DATA
+    # net = NeuralNet([(1, ""), (4, SIGMOID), (1, LINEAR)], MSE, 0.001) # activation
+    # net = NeuralNet([(1, ""), (1, LINEAR)], MSE, 0.001) # linear
+
+    net = NeuralNet([(1, ""), (16, SIGMOID), (16, SIGMOID), (1, LINEAR)], MSE, gradient_normalization=False)
+
+    data = Dataset(path='datasets/projekt1/regression/data.cube.train.10000.csv')
+    data = data.to_numpy()
+    x = np.atleast_2d(data[:, 0]).T
+    y = np.atleast_2d(data[:, 1]).T
+    normalized_y = min_max_normalize(y, y.min(), y.max())
+
+    test_data = Dataset(path='datasets/projekt1/regression/data.cube.test.10000.csv')
+    test_data = test_data.to_numpy()
+    test_x = np.atleast_2d(test_data[:, 0]).T
+    test_y = np.atleast_2d(test_data[:, 1]).T
+
+    net.train(x, normalized_y, epochs=1000, learning_rate=0.05)
+    # , dynamic_learning_rate=True)
+    # , learning_rate_decrease_speed=20000, dynamic_learning_rate=True)
+    print(net)
+
+    predictions = net.predict(test_x)
+    test_y_normalized = min_max_normalize(test_y, y.min(), y.max())
+    print(f"score: {explained_variance_score(test_y_normalized, predictions)}")
+    print(f"loss: {net.loss(test_y_normalized, predictions)}")
+
 
 #### CLASSIFICATION
 
-if __name__ == '__main__':
-    # np.seterr(invalid='raise')
-    # load the MNIST dataset and apply min/max scaling to scale the
-    # pixel intensity values to the range [0, 1] (each image is
-    # represented by an 8 x 8 = 64-dim feature vector)
-    print("[INFO] loading MNIST (sample) dataset...")
-    digits = datasets.load_digits()
-    data = digits.data.astype("float")
-    data = (data - data.min()) / (data.max() - data.min())
-    print("[INFO] samples: {}, dim: {}".format(data.shape[0],
-                                               data.shape[1]))
+def classification():
+    data = Dataset(path='datasets/projekt1/classification/data.three_gauss.test.100.csv')
+    data = data.to_numpy()
+    trainX = np.atleast_2d(data[:, :2])
+    trainY = data[:, -1]
+    test_data = Dataset(path='datasets/projekt1/classification/data.three_gauss.test.100.csv')
+    test_data = test_data.to_numpy()
+    testX = test_data[:, :2]
+    testY = test_data[:, -1]
 
-    # construct the training and testing splits
-    (trainX, testX, trainY, testY) = train_test_split(data,
-                                                      digits.target, test_size=0.25)
     # convert the labels from integers to vectors
     trainY = LabelBinarizer().fit_transform(trainY)
     testY = LabelBinarizer().fit_transform(testY)
 
     # train the network
     print("[INFO] training network...")
-    # nn = NeuralNet([trainX.shape[1], 32, 16, 10], )
-    nn = NeuralNet([(trainX.shape[1], ""), (32, SIGMOID), (16, SIGMOID), (10, SIGMOID)], MSLE, 0.01)
+    nn = NeuralNet([(trainX.shape[1], ""), (16, SIGMOID), (trainY.shape[1], SIGMOID)], MSE)
     print("[INFO] {}".format(nn))
 
-    start = time.time()
-    nn.train(trainX, trainY, 2000)
-    end = time.time()
-    print(f"elapsed time {end - start}")
+    # start = time.time()
+    nn.train(trainX, trainY, epochs=1000,
+             learning_rate=0.01)  # , dynamic_learning_rate=True), learning_rate_decrease_speed=20000)
+    # end = time.time()
+    # print(f"elapsed time {end - start}")
 
     # evaluate the network
     print("[INFO] evaluating network...")
@@ -240,41 +280,6 @@ if __name__ == '__main__':
     predictions = predictions.argmax(axis=1)
     print(classification_report(testY.argmax(axis=1), predictions))
 
-#### REGRESION
 
-# if __name__ == '__main__':
-#     # np.seterr(invalid='raise')
-#     # load the MNIST dataset and apply min/max scaling to scale the
-#     # pixel intensity values to the range [0, 1] (each image is
-#     # represented by an 8 x 8 = 64-dim feature vector)
-#     print("[INFO] loading MNIST (sample) dataset...")
-#     digits = datasets.load_digits()
-#     data = digits.data.astype("float")
-#     data = (data - data.min()) / (data.max() - data.min())
-#     print("[INFO] samples: {}, dim: {}".format(data.shape[0],
-#                                                data.shape[1]))
-#
-#     # construct the training and testing splits
-#     (trainX, testX, trainY, testY) = train_test_split(data,
-#                                                       digits.target, test_size=0.25)
-#     # convert the labels from integers to vectors
-#     # trainY = LabelBinarizer().fit_transform(trainY)
-#     # testY = LabelBinarizer().fit_transform(testY)
-#
-#     # train the network
-#     print("[INFO] training network...")
-#     # nn = NeuralNet([trainX.shape[1], 32, 16, 10], )
-#     nn = NeuralNet([(trainX.shape[1], ""), (32, RELU), (16, TANH), (1, LINEAR)], MSE, 0.1)
-#     print("[INFO] {}".format(nn))
-#
-#     start = time.time()
-#     nn.train(trainX, trainY, 2000)
-#     end = time.time()
-#     print(f"elapsed time {end - start}")
-#
-#     # evaluate the network
-#     print("[INFO] evaluating network...")
-#     predictions = nn.predict(testX)
-#     # predictions = predictions.argmax(axis=1)
-#     # print(classification_report(testY.argmax(axis=1), predictions))
-#     print(classification_report(testY, predictions))
+if __name__ == '__main__':
+    regression()
