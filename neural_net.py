@@ -61,13 +61,12 @@ class NeuralNet:
             for (inputs, target) in zip(training_data, target_values):
                 inputs = np.atleast_2d(inputs)
                 target = np.atleast_2d(target)
-                out = inputs
 
                 # Feed forward
-                out = self.feed_forward(out)
+                self.feed_forward(inputs.copy())
 
                 # Back propagation
-                self.backpropagation(inputs, target, out, gradient_normalization)
+                self.backpropagation(inputs, target, gradient_normalization)
 
             # decrease learning rate when further down the calculations
             if dynamic_learning_rate:
@@ -77,22 +76,19 @@ class NeuralNet:
 
     def feed_forward(self, out):
         for layer in self.layers:
-            before_activation = out.dot(layer.weights)
-            out = layer.activ_func(before_activation)
+            out = layer.activ_func(out.dot(layer.weights))
             layer.outputs = out
 
-        return out
-
-    def backpropagation(self, inputs, target, out, gradient_normalization):
+    def backpropagation(self, inputs, target, gradient_normalization):
         # updating last layer
-        loss_function_derivative = self.loss_deriv(target, out)
+        loss_function_derivative = self.loss_deriv(target, self.layers[-1].outputs)
         activation_function_derivative = self.layers[-1].activ_func_deriv(self.layers[-1].outputs)
         self.layers[-1].delta = loss_function_derivative * activation_function_derivative
 
         # weight change in last layer
         layer_input = self.layers[-2].outputs
         if len(self.layers) == 1:
-            layer_input = np.array(inputs)
+            layer_input = inputs
         layer_input = np.atleast_2d(layer_input).T
 
         gradient = layer_input.dot(np.atleast_2d(self.layers[-1].delta))
