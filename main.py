@@ -7,6 +7,7 @@ from neural_net import NeuralNet
 from nn_functions import SIGMOID, LINEAR, MSE, min_max_normalize
 
 
+# REGRESSION
 def regression():
     # data loading and preparation
     data = Dataset(path='datasets/projekt1/regression/data.cube.train.1000.csv')
@@ -21,8 +22,8 @@ def regression():
     test_x = np.atleast_2d(test_data[:, 0]).T
     test_y = np.atleast_2d(test_data[:, 1]).T
 
-    # net = NeuralNet([(1, ""), (4, SIGMOID), (1, LINEAR)], MSE, 0.001) # activation
-    # net = NeuralNet([(1, ""), (1, LINEAR)], MSE, 0.001) # linear
+    # net = NeuralNet([(1, ""), (4, SIGMOID), (1, LINEAR)], MSE, learning_rate=0.001) # activation
+    # net = NeuralNet([(1, ""), (1, LINEAR)], MSE, learning_rate=0.001) # linear
 
     # create neural network
     model = NeuralNet([(1, ""), (16, SIGMOID), (16, SIGMOID), (1, LINEAR)], MSE)  # cubic
@@ -46,10 +47,9 @@ def regression():
     print(f"loss: {2 * model.loss(test_y_sigmoid_normalized, predictions) / len(test_y)}")
 
 
-#### CLASSIFICATION
-
+# CLASSIFICATION
 def classification():
-    #
+    # data loading and preparation
     data = Dataset(path='datasets/projekt1/classification/data.three_gauss.test.100.csv')
     data = data.to_numpy()
     train_x = np.atleast_2d(data[:, :2])
