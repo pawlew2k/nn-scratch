@@ -4,6 +4,7 @@ from nn_functions import ACTIVATION_FUNCTION_DICT, ACTIVATION_FUNCTION_DERIVATIV
     LOSS_FUNCTION_DERIVATIVE_DICT, WEIGHT_HEURISTICS, SIGMOID, MSE, SOFTMAX, CROSS_ENTROPY, RELU, TANH, LINEAR, MAE, \
     MSLE
 
+
 class Layer:
     def __init__(self, in_size: int, out_size: int, activ_func: str, is_last=False):
         self.activ_func = ACTIVATION_FUNCTION_DICT.get(activ_func, ACTIVATION_FUNCTION_DICT[RELU])
@@ -50,7 +51,7 @@ class NeuralNet:
             # print(layer, '-------')
         return ''.join(layers)
 
-    # train neural network on traning_data
+    # train neural network on training_data
     def train(self, training_data, target_values, epochs: int = 1000, learning_rate=0.001, dynamic_learning_rate=False,
               learning_rate_decrease=5000, display_update=10, gradient_normalization=False):
 
@@ -74,10 +75,14 @@ class NeuralNet:
 
             self.show_update_mid_training(epoch, display_update, training_data, target_values)
 
-    def feed_forward(self, out):
+    # feed forward step with input data x
+    def feed_forward(self, x, update_layer_outputs=True):
         for layer in self.layers:
-            out = layer.activ_func(out.dot(layer.weights))
-            layer.outputs = out
+            x = layer.activ_func(x.dot(layer.weights))
+            if update_layer_outputs:
+                layer.outputs = x
+
+        return x
 
     def backpropagation(self, inputs, target, gradient_normalization):
         # updating last layer
@@ -133,8 +138,4 @@ class NeuralNet:
     # predict an output based on input x
     def predict(self, x):
         prediction = np.atleast_2d(x)
-
-        for layer in self.layers:
-            prediction = layer.activ_func(np.dot(prediction, layer.weights))
-
-        return prediction
+        return self.feed_forward(prediction, update_layer_outputs=False)

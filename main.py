@@ -30,7 +30,7 @@ def regression():
 
     # train neural network
     print("[INFO] training network...")
-    model.train(x, sigmoid_normalized, epochs=2000, learning_rate=0.01)
+    model.train(x, sigmoid_normalized, epochs=100, learning_rate=0.01)
 
     # cubic
     # net.train(x, sigmoid_normalized, epochs=2000, learning_rate=0.01)
