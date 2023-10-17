@@ -1,5 +1,16 @@
-#### CLASSIFICATION
+import time
 
+import numpy as np
+from sklearn import datasets
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelBinarizer
+
+from neural_net import NeuralNet
+from nn_functions import RELU, TANH, LINEAR, MSE, SIGMOID
+
+
+#### MNIST CLASSIFICATION
 def mnist_classification():
     # np.seterr(invalid='raise')
     # load the MNIST dataset and apply min/max scaling to scale the
@@ -22,17 +33,20 @@ def mnist_classification():
     # train the network
     print("[INFO] training network...")
     # nn = NeuralNet([trainX.shape[1], 32, 16, 10], )
-    nn = NeuralNet([(trainX.shape[1], ""), (32, SIGMOID), (16, SIGMOID), (10, SIGMOID)], MSE, 0.1)
-    print("[INFO] {}".format(nn))
+    model = NeuralNet([(trainX.shape[1], ""), (32, SIGMOID), (16, SIGMOID), (10, SIGMOID)], MSE)
+    print("[INFO] {}".format(model))
 
     start = time.time()
-    nn.train(trainX, trainY, 2000)
+    model.train(trainX, trainY, epochs=2000, learning_rate=0.1)
     end = time.time()
     print(f"elapsed time {end - start}")
 
     # evaluate the network
     print("[INFO] evaluating network...")
-    predictions = nn.predict(testX)
+    prepare_test_x = np.atleast_2d(testX)
+    prepare_test_x = np.c_[prepare_test_x, np.ones((prepare_test_x.shape[0]))]
+
+    predictions = model.predict(prepare_test_x)
     predictions = predictions.argmax(axis=1)
     print(classification_report(testY.argmax(axis=1), predictions))
 
@@ -61,17 +75,21 @@ def mnist_regression():
     # train the network
     print("[INFO] training network...")
     # nn = NeuralNet([trainX.shape[1], 32, 16, 10], )
-    nn = NeuralNet([(trainX.shape[1], ""), (32, RELU), (16, TANH), (1, LINEAR)], MSE, 0.1)
-    print("[INFO] {}".format(nn))
+    model = NeuralNet([(trainX.shape[1], ""), (32, TANH), (16, TANH), (1, LINEAR)], MSE)
+    print("[INFO] {}".format(model))
 
     start = time.time()
-    nn.train(trainX, trainY, 2000)
+    model.train(trainX, trainY, epochs=2000, learning_rate=0.1)
     end = time.time()
     print(f"elapsed time {end - start}")
 
     # evaluate the network
     print("[INFO] evaluating network...")
-    predictions = nn.predict(testX)
+
+    prepare_test_x = np.atleast_2d(testX)
+    prepare_test_x = np.c_[prepare_test_x, np.ones((prepare_test_x.shape[0]))]
+
+    predictions = model.predict(prepare_test_x)
     # predictions = predictions.argmax(axis=1)
     # print(classification_report(testY.argmax(axis=1), predictions))
     print(classification_report(testY, predictions))

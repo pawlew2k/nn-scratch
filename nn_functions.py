@@ -131,3 +131,16 @@ WEIGHT_HEURISTICS: dict[str, Callable[[int, int], float]] = {
     "BINARY_STEP": lambda in_size, out_size: xavier_heuristic(in_size),
     "SOFTMAX": lambda in_size, out_size: xavier_heuristic(in_size)
 }
+
+def reverse_min_max_normalize(normalized_data: np.ndarray, input_data: np.ndarray):
+    data = normalized_data.copy()
+    min_val = np.min(input_data)
+    max_val = np.max(input_data)
+    return data * (max_val - min_val) + min_val
+
+
+def min_max_normalize(input_data: np.ndarray, min_val, max_val, feature_range=(0, 1)):
+    data = input_data.copy()
+    data_std = (data - min_val) / (max_val - min_val)
+    data_scl = data_std * (feature_range[1] - feature_range[0]) + feature_range[0]
+    return data_scl
