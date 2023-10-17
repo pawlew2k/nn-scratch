@@ -208,9 +208,8 @@ def min_max_normalize(input_data: np.ndarray, min_val, max_val):
     return (data - min_val) / (max_val - min_val)
 
 
-def z_score_normalize(data: np.ndarray):
-    mean = np.mean(data)
-    std_dev = np.std(data)
+def z_score_normalize(input_data: np.ndarray, mean, std_dev):
+    data = input_data.copy()
     standardized_data = (data - mean) / std_dev
     return standardized_data
 
