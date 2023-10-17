@@ -1,66 +1,46 @@
-# Elementy do zaimplementowania
-# możliwość zainicjowania (powtarzalnego) procesu uczenia z zadanym ziarnem generatora liczb losowych
-# łatwa konfiguracja liczby warstw w sieci i neuronów w warstwie, obecności biasów
-# (w dniu oddania będzie trzeba szybko dostosować architekturę sieci)
-# wizualizacja zbioru uczącego i efektów klasyfikacji oraz regresji - (raczej matplotlib)
-# wizualizacja błędu propagowanego w kolejnych iteracjach uczenia (na każdej z wag) (raczej matplotlib)
-# wizualizacja wartości wag w kolejnych iteracjach uczenia (może networkx)
-from enum import Enum
-
 import numpy as np
 
-
-# Elementy do zbadania
-# Wpływ funkcji aktywacji na skuteczność działania sieci – sprawdzić funkcję sigmoidalną i dwie inne, dowolne,
-# funkcje aktywacji wewnątrz sieci. Uwaga: funkcja aktywacji na wyjściu musi być dobrana odpowiednio do rodzaju problemu.
-# Wpływ liczby warstw ukrytych w sieci i ich liczności. Zbadać różne liczby warstw od 0 do 4, kilka różnych architektur
-# Wpływ miary błędu na wyjściu sieci na skuteczność uczenia. Sprawdzić dwie miary błędu dla klasyfikacji i dwie dla regresji.
+from nn_functions import ACTIVATION_FUNCTION_DICT, ACTIVATION_FUNCTION_DERIVATIVE_DICT, LOSS_FUNCTION_DICT, \
+    LOSS_FUNCTION_DERIVATIVE_DICT, WEIGHT_HEURISTICS, SIGMOID, MSE, SOFTMAX, CROSS_ENTROPY, RELU, TANH, LINEAR, MAE, \
+    MSLE
 
 
-class Tensor:
-    def __init__(self, in_size: int, out_size: int):
-        weight_heuristic = np.sqrt(2 / (in_size + out_size))
-        # bias as last value in weights => [weights, bias]
-        self.weights = np.random.randn(out_size, in_size + 1) * weight_heuristic
-        # self.bias = np.random.random(out_size) * weight_heuristic
+class Layer:
+    def __init__(self, in_size: int, out_size: int, activ_func: str, is_last=False):
+        self.activ_func = ACTIVATION_FUNCTION_DICT.get(activ_func, ACTIVATION_FUNCTION_DICT[RELU])
+        self.activ_func_deriv = ACTIVATION_FUNCTION_DERIVATIVE_DICT.get(activ_func,
+                                                                        ACTIVATION_FUNCTION_DERIVATIVE_DICT[RELU])
+
+        ## bias as last value in weights => [weights, bias]
+        weight_heuristic = WEIGHT_HEURISTICS.get(activ_func, WEIGHT_HEURISTICS[RELU])(in_size, out_size)
+        self.weights = np.random.randn(in_size + 1,
+                                       out_size + (0 if is_last else 1)) * weight_heuristic
+
+        # output after activation function
+        self.outputs = np.zeros(out_size)
+
+        # deltas for layer
+        self.delta = np.array([0])
 
     def __str__(self):
-        W = self.get_weights()
-        B = self.get_biases()
-        return '\n'.join([f'W_{i}={W[i]}, b_{i}={B[i]}' for i in range(W.shape[0])])
+        w = self.get_weights()
+        return '\n'.join([f'W_{i}={w[i]}' for i in range(w.shape[0])])
 
     def get_weights(self):
-        return self.weights[:, :-1]
-
-    def get_biases(self):
-        return self.weights[:, -1]
+        return self.weights
 
 
 class NeuralNet:
-    ACTIVATION_FUNCTION_DICT = {
-        "RELU": lambda x: x if x > 0 else 0.0,
-        "SIGMOID": lambda x: 1 / (1 + np.exp(-x)),
-        "TANH": lambda x: (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)),
-        "LINEAR": lambda x: x,
-        "BINARY_STEP": lambda x: 1 if x >= 0 else 0
-    }
+    def __init__(self, layers: list[(int, str)], loss_func: str, seed: int = 42):
+        self.learning_rate = 0.001
+        self.loss = LOSS_FUNCTION_DICT.get(loss_func, LOSS_FUNCTION_DICT["MSE"])
+        self.loss_deriv = LOSS_FUNCTION_DERIVATIVE_DICT.get(loss_func, LOSS_FUNCTION_DERIVATIVE_DICT["MSE"])
 
-    ACTIVATION_FUNCTION_DERIVATIVE_DICT = {
-        "RELU": lambda x: x if 1 > 0 else 0.0,
-        "SIGMOID": lambda x: np.exp(-x) / (1 + np.exp(-x)) ** 2,
-        "TANH": lambda x: 4 / (np.exp(x) + np.exp(-x)) ** 2,
-        "LINEAR": lambda x: 1,
-        "BINARY_STEP": lambda x: 0
-    }
-
-    def __init__(self, layers: list[int], activ_func: str, seed: int = 42):
-        self.net_structure = layers
-        self.activ_func = self.ACTIVATION_FUNCTION_DICT.get(activ_func, self.ACTIVATION_FUNCTION_DICT["RELU"])
-        # init Tensors
+        # initialize Layers
         np.random.seed(seed)
-        self.layers: list[Tensor] = []
+        self.layers: list[Layer] = []
         for i in range(1, len(layers)):
-            self.layers.append(Tensor(layers[i - 1], layers[i]))
+            self.layers.append(Layer(layers[i - 1][0], layers[i][0], layers[i][1], i == len(layers) - 1))
 
     def __str__(self):
         layers = []
@@ -71,26 +51,91 @@ class NeuralNet:
             # print(layer, '-------')
         return ''.join(layers)
 
-    def train(self, epochs: int, training_data: list[list[float]]):
-        for _ in range(epochs):
-            for inputs in training_data:
-                out = np.array(inputs)
+    # train neural network on training_data
+    def train(self, training_data, target_values, epochs: int = 1000, learning_rate=0.001, dynamic_learning_rate=False,
+              learning_rate_decrease=5000, display_update=10, gradient_normalization=False):
+
+        self.learning_rate = learning_rate
+        training_data = np.c_[training_data, np.ones((training_data.shape[0]))]
+
+        for epoch in range(epochs):
+            for (inputs, target) in zip(training_data, target_values):
+                inputs = np.atleast_2d(inputs)
+                target = np.atleast_2d(target)
 
                 # Feed forward
-                for layer in self.layers:
-                    out = np.append(out, 1.0)
-                    out = np.array([self.activ_func(x) for x in layer.weights.dot(out)])
+                self.feed_forward(inputs.copy())
 
-                # print(out)
                 # Back propagation
-                # TODO: implement back propagation after 2nd lecture
+                self.backpropagation(inputs, target, gradient_normalization)
 
-    def predict(self, data: list[list[float]]):
-        # predict the outcome
-        pass
+            # decrease learning rate when further down the calculations
+            if dynamic_learning_rate:
+                self.learning_rate /= (1 + epoch / learning_rate_decrease)
 
+            self.show_update_mid_training(epoch, display_update, training_data, target_values)
 
-if __name__ == '__main__':
-    net = NeuralNet([3, 3, 2], "SIGMOID")
-    net.train(1, [[1.0, 2.0, 3.0]])
-    # print(net)
+    # feed forward step with input data x
+    def feed_forward(self, x, update_layer_outputs=True):
+        for layer in self.layers:
+            x = layer.activ_func(x.dot(layer.weights))
+            if update_layer_outputs:
+                layer.outputs = x
+
+        return x
+
+    def backpropagation(self, inputs, target, gradient_normalization):
+        # updating last layer
+        loss_function_derivative = self.loss_deriv(target, self.layers[-1].outputs)
+        activation_function_derivative = self.layers[-1].activ_func_deriv(self.layers[-1].outputs)
+        self.layers[-1].delta = loss_function_derivative * activation_function_derivative
+
+        # weight change in last layer
+        layer_input = self.layers[-2].outputs
+        if len(self.layers) == 1:
+            layer_input = inputs
+        layer_input = np.atleast_2d(layer_input).T
+
+        gradient = layer_input.dot(np.atleast_2d(self.layers[-1].delta))
+
+        if gradient_normalization:
+            normalization = np.linalg.norm(gradient, axis=0, keepdims=True)
+            gradient /= normalization
+
+        self.layers[-1].weights -= self.learning_rate * gradient
+
+        # updating hidden layers
+        for i in range(len(self.layers) - 2, -1, -1):
+            weights_t = self.layers[i + 1].weights.T
+            delta_prev_layer = self.layers[i + 1].delta
+            self.layers[i].delta = delta_prev_layer.dot(weights_t) * self.layers[i].activ_func_deriv(
+                self.layers[i].outputs)
+
+            # getting inputs for layer
+            layer_input = self.layers[i - 1].outputs
+            if i == 0:
+                layer_input = inputs
+            layer_input = np.atleast_2d(layer_input).T
+
+            gradient = layer_input.dot(np.atleast_2d(self.layers[i].delta))
+
+            # normalize gradient
+            if gradient_normalization:
+                normalization = np.linalg.norm(gradient, axis=0, keepdims=True)
+                gradient /= normalization
+
+            # update weights
+            self.layers[i].weights -= self.learning_rate * gradient
+
+    # show update during training
+    def show_update_mid_training(self, epoch, display_update, training_data, target_values):
+        if epoch == 0 or (epoch + 1) % display_update == 0:
+            targets = np.atleast_2d(target_values)
+            predictions = self.predict(training_data)
+            loss = self.loss(targets, predictions)
+            print("[INFO] epoch={}, loss={:.7f}".format(epoch + 1, loss))
+
+    # predict an output based on input x
+    def predict(self, x):
+        prediction = np.atleast_2d(x)
+        return self.feed_forward(prediction, update_layer_outputs=False)
