@@ -19,7 +19,7 @@ NLL = "NLL"
 
 
 def relu(arr: np.ndarray):
-    return arr * (arr > 0)
+    return np.maximum(0, arr)
 
 
 def sigmoid(arr: np.ndarray):
@@ -35,8 +35,9 @@ def binary_step(arr: np.ndarray):
 
 
 def softmax(arr: np.ndarray):
-    exps = np.exp(arr)
-    return exps / np.sum(exps)
+    shift_arr = arr - np.max(arr)  # numerically stable way
+    exps = np.exp(shift_arr)
+    return exps / np.sum(exps, axis=1, keepdims=True)
 
 
 ACTIVATION_FUNCTION_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
@@ -78,21 +79,21 @@ ACTIVATION_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray], np.ndarray
 LOSS_FUNCTION_DICT: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
     # LOSS FUNCTIONS FOR REGRESSION
     # MEAN SQUARED ERROR
-    "MSE": lambda target, actual: 0.5 * np.sum((target - actual) ** 2),
+    "MSE": lambda target, actual: np.mean((target - actual) ** 2),
     # MEAN ABSOLUTE ERROR
-    "MAE": lambda target, actual: np.sum(np.abs(actual - target)),
+    "MAE": lambda target, actual: np.mean(np.abs(actual - target)),
     # MEAN SQUARED LOGARITHMIC ERROR
-    "MSLE": lambda target, actual: 0.5 * np.sum((np.log(target + 1) - np.log(actual + 1)) ** 2),
+    "MSLE": lambda target, actual: np.mean((np.log(target + 1) - np.log(actual + 1)) ** 2),
+
     # LOSS FUNCTIONS FOR CLASSIFICATION
     "CROSS_ENTROPY": lambda target, actual: -np.sum(target * np.log(actual)),
     # NEGATIVE LOG LIKELIHOOD
-    "NLL": lambda target, actual: -np.sum(target * np.log(actual))
+    "NLL": lambda target, actual: -np.sum((target * np.log(actual) + (1 - target) * np.log(1 - actual)))
 }
 
 
-def cross_entropy_derivative(target, actual):
-    result = -target / actual
-    return result
+def mse_derivative(target, actual):
+    return 2 * (actual - target)
 
 
 def mae_derivative(target, actual):
@@ -100,14 +101,24 @@ def mae_derivative(target, actual):
 
 
 def msle_derivative(target, actual):
-    return (np.log(actual) - np.log(target + 1)) / (actual + 1)
+    return 2 * (np.log(actual) - np.log(target + 1)) / (actual + 1)
+
+
+def cross_entropy_derivative(target, actual):
+    return actual - target
+
+
+def nll_derivative(target, actual):
+    # return (target - actual) / (actual * (1 - actual)) ?? increasing loss
+    return actual - target
 
 
 LOSS_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray, np.ndarray], np.ndarray]] = {
-    "MSE": lambda target, actual: actual - target,
+    "MSE": lambda target, actual: mse_derivative(target, actual),
     "MAE": lambda target, actual: mae_derivative(target, actual),
     "MSLE": lambda target, actual: msle_derivative(target, actual),
-    "CROSS_ENTROPY": lambda target, actual: cross_entropy_derivative(target, actual)
+    "CROSS_ENTROPY": lambda target, actual: cross_entropy_derivative(target, actual),
+    "NLL": lambda target, actual: nll_derivative(target, actual)
 }
 
 
@@ -131,6 +142,7 @@ WEIGHT_HEURISTICS: dict[str, Callable[[int, int], float]] = {
     "BINARY_STEP": lambda in_size, out_size: xavier_heuristic(in_size),
     "SOFTMAX": lambda in_size, out_size: xavier_heuristic(in_size)
 }
+
 
 def reverse_min_max_normalize(normalized_data: np.ndarray, input_data: np.ndarray):
     data = normalized_data.copy()

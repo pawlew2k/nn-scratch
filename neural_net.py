@@ -1,18 +1,15 @@
 import numpy as np
 
-from nn_functions import ACTIVATION_FUNCTION_DICT, ACTIVATION_FUNCTION_DERIVATIVE_DICT, LOSS_FUNCTION_DICT, \
-    LOSS_FUNCTION_DERIVATIVE_DICT, WEIGHT_HEURISTICS, SIGMOID, MSE, SOFTMAX, CROSS_ENTROPY, RELU, TANH, LINEAR, MAE, \
-    MSLE
+from nn_functions import *
 
 
 class Layer:
     def __init__(self, in_size: int, out_size: int, activ_func: str, is_last=False):
-        self.activ_func = ACTIVATION_FUNCTION_DICT.get(activ_func, ACTIVATION_FUNCTION_DICT[RELU])
-        self.activ_func_deriv = ACTIVATION_FUNCTION_DERIVATIVE_DICT.get(activ_func,
-                                                                        ACTIVATION_FUNCTION_DERIVATIVE_DICT[RELU])
+        self.activ_func = ACTIVATION_FUNCTION_DICT[activ_func]
+        self.activ_func_deriv = ACTIVATION_FUNCTION_DERIVATIVE_DICT[activ_func]
 
         ## bias as last value in weights => [weights, bias]
-        weight_heuristic = WEIGHT_HEURISTICS.get(activ_func, WEIGHT_HEURISTICS[RELU])(in_size, out_size)
+        weight_heuristic = WEIGHT_HEURISTICS[activ_func](in_size, out_size)
         self.weights = np.random.randn(in_size + 1,
                                        out_size + (0 if is_last else 1)) * weight_heuristic
 
@@ -33,22 +30,23 @@ class Layer:
 class NeuralNet:
     def __init__(self, layers: list[(int, str)], loss_func: str, seed: int = 42):
         self.learning_rate = 0.001
-        self.loss = LOSS_FUNCTION_DICT.get(loss_func, LOSS_FUNCTION_DICT["MSE"])
-        self.loss_deriv = LOSS_FUNCTION_DERIVATIVE_DICT.get(loss_func, LOSS_FUNCTION_DERIVATIVE_DICT["MSE"])
+        self.loss = LOSS_FUNCTION_DICT[loss_func]
+        self.loss_deriv = LOSS_FUNCTION_DERIVATIVE_DICT[loss_func]
 
         # initialize Layers
         np.random.seed(seed)
         self.layers: list[Layer] = []
+        is_last_layer = False
         for i in range(1, len(layers)):
-            self.layers.append(Layer(layers[i - 1][0], layers[i][0], layers[i][1], i == len(layers) - 1))
+            if i == len(layers) - 1:
+                is_last_layer = True
+            self.layers.append(Layer(in_size=layers[i - 1][0], out_size=layers[i][0],
+                                     activ_func=layers[i][1], is_last=is_last_layer))
 
     def __str__(self):
         layers = []
         for i, layer in enumerate(self.layers):
-            # print(type(layer))
-            # print(layer.weights, 'xxxxxxxxx')
             layers.append(f'Layer_{i}:\n{str(layer)}\n')
-            # print(layer, '-------')
         return ''.join(layers)
 
     # train neural network on training_data
@@ -59,7 +57,7 @@ class NeuralNet:
         training_data = np.c_[training_data, np.ones((training_data.shape[0]))]
 
         for epoch in range(epochs):
-            for (inputs, target) in zip(training_data, target_values):
+            for inputs, target in zip(training_data, target_values):
                 inputs = np.atleast_2d(inputs)
                 target = np.atleast_2d(target)
 
@@ -133,7 +131,7 @@ class NeuralNet:
             targets = np.atleast_2d(target_values)
             predictions = self.predict(training_data)
             loss = self.loss(targets, predictions)
-            print("[INFO] epoch={}, loss={:.7f}".format(epoch + 1, loss))
+            print(f'[INFO] epoch={epoch + 1}, loss={loss:.7f}')
 
     # predict an output based on input x
     def predict(self, x):
