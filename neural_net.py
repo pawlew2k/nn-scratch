@@ -7,6 +7,7 @@ class Layer:
     def __init__(self, in_size: int, out_size: int, activ_func: str, is_last=False):
         self.activ_func = ACTIVATION_FUNCTION_DICT[activ_func]
         self.activ_func_deriv = ACTIVATION_FUNCTION_DERIVATIVE_DICT[activ_func]
+        self.is_last = is_last
 
         ## bias as last value in weights => [weights, bias]
         weight_heuristic = WEIGHT_HEURISTICS[activ_func](in_size, out_size)
@@ -18,17 +19,22 @@ class Layer:
 
         # deltas for layer
         self.delta = np.array([0])
+        self.gradient = np.array([0])
 
     def __str__(self):
         w = self.get_weights()
         return '\n'.join([f'W_{i}={w[i]}' for i in range(w.shape[0])])
 
     def get_weights(self):
-        return self.weights
+        return self.weights[0:-1, 0:-1] if not self.is_last else self.weights[0:-1, :]
+
+    def get_gradient(self):
+        return self.gradient[0:-1, 0:-1] if not self.is_last else self.gradient[0:-1, :]
 
 
 class NeuralNet:
     def __init__(self, layers: list[(int, str)], loss_func: str, seed: int = 42):
+        self.net_structure = list(zip(*layers))[0]
         self.learning_rate = 0.001
         self.loss = LOSS_FUNCTION_DICT[loss_func]
         self.loss_deriv = LOSS_FUNCTION_DERIVATIVE_DICT[loss_func]
@@ -100,6 +106,8 @@ class NeuralNet:
             normalization = np.linalg.norm(gradient, axis=0, keepdims=True)
             gradient /= normalization
 
+        self.layers[-1].gradient = np.asarray(gradient)
+
         self.layers[-1].weights -= self.learning_rate * gradient
 
         # updating hidden layers
@@ -121,6 +129,8 @@ class NeuralNet:
             if gradient_normalization:
                 normalization = np.linalg.norm(gradient, axis=0, keepdims=True)
                 gradient /= normalization
+
+            self.layers[i].gradient = np.asarray(gradient)
 
             # update weights
             self.layers[i].weights -= self.learning_rate * gradient
