@@ -4,7 +4,7 @@ from sklearn.preprocessing import LabelBinarizer
 
 from dataset import Dataset
 from neural_net import NeuralNet
-from nn_functions import SIGMOID, LINEAR, MSE, min_max_normalize
+from nn_functions import *
 
 
 # REGRESSION
@@ -23,7 +23,7 @@ def regression():
     test_y = np.atleast_2d(test_data[:, 1]).T
 
     # net = NeuralNet([(1, ""), (4, SIGMOID), (1, LINEAR)], MSE, learning_rate=0.001) # activation
-    # net = NeuralNet([(1, ""), (1, LINEAR)], MSE, learning_rate=0.001) # linear
+    # net = NeuralNet([(1, ""), (1, LINEAR)], MSE)  # linear
 
     # create neural network
     model = NeuralNet([(1, ""), (16, SIGMOID), (16, SIGMOID), (1, LINEAR)], MSE)  # cubic
@@ -64,6 +64,9 @@ def classification():
     train_y = LabelBinarizer().fit_transform(train_y)
     test_y = LabelBinarizer().fit_transform(test_y)
 
+    # print(test_x, train_x.shape[1])
+    # print(test_y, train_y.shape[1])
+
     # create neural network
     model = NeuralNet([(train_x.shape[1], ""), (16, SIGMOID), (train_y.shape[1], SIGMOID)], MSE)
 
@@ -84,3 +87,4 @@ def classification():
 
 if __name__ == '__main__':
     regression()
+    # classification()

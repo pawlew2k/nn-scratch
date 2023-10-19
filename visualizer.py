@@ -13,7 +13,7 @@ from neural_net import NeuralNet
 
 class Visualizer:
     @staticmethod
-    def show_dataset(dataset: DataFrame, savefig: bool = False):
+    def show_dataset(dataset: DataFrame, savefig: bool = False, hold_plot=False):
         plt.xlabel('x')
         plt.ylabel('y')
         if hasattr(dataset, 'name'):
@@ -39,25 +39,54 @@ class Visualizer:
                 Visualizer.save_fig(path)
             else:
                 raise Exception('Dataset has no attributes: path')
-        else:
+        elif not hold_plot:
             plt.show()
 
     @staticmethod
     def show_net_weights(net: NeuralNet, savefig: bool = False, path: str = None):
         weights = [layer.get_weights() for layer in net.layers]
-        # Draw the Neural Network with weights
         network = VisNN.DrawNN(net.net_structure, weights)
         network.draw(savefig, path)
 
     @staticmethod
     def show_gradients(net: NeuralNet, savefig: bool = False, path: str = None):
-        # print(net.layers[0].gradient.shape)
-        # print(net.layers[0].gradient[0:-1, 0:-1])
-        gradients = [layer.get_gradient() * 100 for layer in net.layers]
-        # Draw the Neural Network with weights
-        print(gradients)
+        gradients = [layer.get_gradient() for layer in net.layers]
         network = VisNN.DrawNN(net.net_structure, gradients)
         network.draw(savefig, path)
+
+    @staticmethod
+    def show_prediction(net: NeuralNet, dataset: DataFrame, savefig: bool = False, path: str = None):
+        Visualizer.show_dataset(dataset, hold_plot=True)
+
+        if hasattr(dataset, 'name'):
+            plt.title(f"Prediction dataset: '{dataset.name}'")
+
+        if dataset.task == 'regression':
+            x = dataset.x
+            prepared_x = [np.atleast_2d(datum) for datum in x]
+            prepared_x = [np.c_[datum, np.ones((datum.shape[0]))] for datum in prepared_x]
+            # print(prepared_x)
+            y = [net.predict(datum) for datum in prepared_x]
+            y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y)
+            plt.scatter(x, y_normalized, marker='.', s=1, edgecolors='green')
+            plt.legend(['observation', 'prediction'])
+
+        # elif dataset.task == 'classification':
+        #     for label in pd.unique(dataset.cls):
+        #         x = dataset.loc[dataset['cls'] == label].x
+        #         y = dataset.loc[dataset['cls'] == label].y
+        #         plt.scatter(x, y, marker='.', s=20, label=label)
+        #     plt.legend(title='labels:')
+        # else:
+        #     raise Exception('Task in dataset undefined')
+
+        if savefig:
+            if path:
+                Visualizer.save_fig(path)
+            else:
+                raise Exception('Path needed to save')
+        else:
+            plt.show()
 
     @staticmethod
     def save_fig(path: str):
@@ -92,11 +121,14 @@ if __name__ == '__main__':
 
     # train neural network
     print("[INFO] training network...")
-    for i in range(10):
-        model.train(x, sigmoid_normalized, epochs=10, learning_rate=0.01)
+    # for i in range(10):
+    #     model.train(x, sigmoid_normalized, epochs=10, learning_rate=0.01)
         # print(net)
         # print(net.net_structure)
-        Visualizer.show_gradients(model)
+        # Visualizer.show_gradients(model)
+    model.train(x, sigmoid_normalized, epochs=100, learning_rate=0.01)
+    test_data = Dataset(path='datasets/projekt1/regression/data.cube.test.1000.csv')
+    Visualizer.show_prediction(model, test_data, savefig=True, path='plots/predict_regression/example.jpg')
     # cubic
     # net.train(x, sigmoid_normalized, epochs=2000, learning_rate=0.01)
 
