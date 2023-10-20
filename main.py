@@ -5,6 +5,7 @@ from sklearn.preprocessing import LabelBinarizer
 from dataset import Dataset
 from neural_net import NeuralNet
 from nn_functions import *
+from visualizer import Visualizer
 
 
 # REGRESSION
@@ -72,10 +73,13 @@ def classification():
 
     # train neural network
     print("[INFO] training network...")
-    model.train(train_x, train_y, epochs=1000, learning_rate=0.01)
+    model.train(train_x, train_y, epochs=100, learning_rate=0.01)
 
     # evaluate network
     print("[INFO] evaluating network...")
+    Visualizer.show_prediction(model,
+                               Dataset(path='datasets/projekt1/classification/data.three_gauss.test.100.csv'),
+                               savefig=False, path='plots/predict_classification/example.jpg')
     prepare_test_x = np.atleast_2d(test_x)
     prepare_test_x = np.c_[prepare_test_x, np.ones((prepare_test_x.shape[0]))]
 
@@ -86,5 +90,5 @@ def classification():
 
 
 if __name__ == '__main__':
-    regression()
-    # classification()
+    # regression()
+    classification()

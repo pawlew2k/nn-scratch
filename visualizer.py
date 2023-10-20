@@ -5,6 +5,7 @@ from utils.weights_visualizator import VisualizeNN as VisNN
 import os
 
 from matplotlib import pyplot as plt
+import matplotlib.colors as mcolors
 import pandas as pd
 from pandas.core.frame import DataFrame
 
@@ -57,10 +58,8 @@ class Visualizer:
     @staticmethod
     def show_prediction(net: NeuralNet, dataset: DataFrame, savefig: bool = False, path: str = None):
         Visualizer.show_dataset(dataset, hold_plot=True)
-
         if hasattr(dataset, 'name'):
             plt.title(f"Prediction dataset: '{dataset.name}'")
-
         if dataset.task == 'regression':
             x = dataset.x
             prepared_x = [np.atleast_2d(datum) for datum in x]
@@ -71,14 +70,21 @@ class Visualizer:
             plt.scatter(x, y_normalized, marker='.', s=1, edgecolors='green')
             plt.legend(['observation', 'prediction'])
 
-        # elif dataset.task == 'classification':
-        #     for label in pd.unique(dataset.cls):
-        #         x = dataset.loc[dataset['cls'] == label].x
-        #         y = dataset.loc[dataset['cls'] == label].y
-        #         plt.scatter(x, y, marker='.', s=20, label=label)
-        #     plt.legend(title='labels:')
-        # else:
-        #     raise Exception('Task in dataset undefined')
+        elif dataset.task == 'classification':
+            colors = list(mcolors.TABLEAU_COLORS.values())
+            for label in pd.unique(dataset.cls):
+                x = dataset.loc[dataset['cls'] == label].x
+                y = dataset.loc[dataset['cls'] == label].y
+                x_y = np.atleast_2d(list(zip(x, y)))
+                x_y = np.c_[x_y, np.ones((x_y.shape[0]))]
+                predicted_labels = net.predict(x_y, task='classification')
+                print(predicted_labels)
+                for x_datum, y_datum, pred_label in zip(x, y, predicted_labels):
+                    if pred_label != label:
+                        plt.scatter(x_datum, y_datum, marker='.', s=20, color=colors[pred_label-1])
+                        plt.scatter(x_datum, y_datum, marker='x', s=40, color='red', linewidths=0.6)
+        else:
+            raise Exception('Task in dataset undefined')
 
         if savefig:
             if path:
@@ -123,9 +129,9 @@ if __name__ == '__main__':
     print("[INFO] training network...")
     # for i in range(10):
     #     model.train(x, sigmoid_normalized, epochs=10, learning_rate=0.01)
-        # print(net)
-        # print(net.net_structure)
-        # Visualizer.show_gradients(model)
+    # print(net)
+    # print(net.net_structure)
+    # Visualizer.show_gradients(model)
     model.train(x, sigmoid_normalized, epochs=100, learning_rate=0.01)
     test_data = Dataset(path='datasets/projekt1/regression/data.cube.test.1000.csv')
     Visualizer.show_prediction(model, test_data, savefig=True, path='plots/predict_regression/example.jpg')

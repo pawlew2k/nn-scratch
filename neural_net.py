@@ -144,6 +144,9 @@ class NeuralNet:
             print(f'[INFO] epoch={epoch + 1}, loss={loss:.7f}')
 
     # predict an output based on input x
-    def predict(self, x):
+    def predict(self, x, task: str = None, return_probs=False):
         prediction = np.atleast_2d(x)
-        return self.feed_forward(prediction, update_layer_outputs=False)
+        output = self.feed_forward(prediction, update_layer_outputs=False)
+        if task == 'classification' and not return_probs:
+            return np.argmax(np.asarray(output), axis=1) + 1
+        return output
