@@ -64,3 +64,10 @@ def predict_and_evaluate_classification(model, test_path, test_x, test_y, includ
     print(classification_report(test_y.argmax(axis=1), predictions))
 
     return predictions
+
+
+def check_classification_dimensions(path):
+    data = Dataset(path=path)
+    x_dim = np.atleast_2d(data.head(1).iloc[:, :-1]).shape[1]
+    y_dim = data.iloc[:, -1].nunique()
+    return x_dim, y_dim
