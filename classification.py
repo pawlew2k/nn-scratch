@@ -13,10 +13,6 @@ def classification(train_path: str, test_path: str, model: NeuralNet, hidden_fun
     # load data
     train_x, train_y, test_x, test_y = prepare_data_for_classification(train_path, test_path)
 
-    # create neural network
-    # model = NeuralNet([(train_x.shape[1], ""), (16, hidden_function), (train_y.shape[1], last_layer_function)],
-    #                   loss_function, include_bias=include_bias)
-
     # train neural network
     print("[INFO] training network...")
     model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias)
@@ -40,7 +36,11 @@ def prepare_data_for_classification(train_path: str, test_path: str, include_bia
 
     # convert classification from integers to vectors
     train_y = LabelBinarizer().fit_transform(train_y)
+    if train_y.shape[1] == 1:
+        train_y = np.hstack((1 - train_y, train_y))
     test_y = LabelBinarizer().fit_transform(test_y)
+    if test_y.shape[1] == 1:
+        test_y = np.hstack((1 - test_y, test_y))
 
     test_x = np.atleast_2d(test_x)
 

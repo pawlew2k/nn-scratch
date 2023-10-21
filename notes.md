@@ -59,3 +59,7 @@ net = NeuralNet([(1, ""), (1, LINEAR)], MSE)
 
 model = NeuralNet([(1, ""), (16, SIGMOID), (16, SIGMOID), (1, LINEAR)], MSE)  # cubic
 
+    # create neural network
+    # model = NeuralNet([(train_x.shape[1], ""), (16, hidden_function), (train_y.shape[1], last_layer_function)],
+    #                   loss_function, include_bias=include_bias)
+
