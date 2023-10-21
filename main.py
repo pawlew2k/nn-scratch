@@ -82,7 +82,7 @@ def square_regression():
 def simple_classification():
     train_path = 'datasets/projekt1/classification/data.simple.train.500.csv'
     test_path = 'datasets/projekt1/classification/data.simple.test.500.csv'
-    hidden_function = RELU
+    hidden_function = SIGMOID
     last_layer_function = SOFTMAX
     loss_function = CROSS_ENTROPY
     include_bias = True
@@ -90,13 +90,13 @@ def simple_classification():
     # create neural network
     model = NeuralNet([(2, ""), (4, hidden_function), (2, last_layer_function)], loss_function,
                       include_bias=include_bias)
-    classification(train_path, test_path, model, hidden_function=hidden_function, epochs=10, include_bias=include_bias)
+    classification(train_path, test_path, model, hidden_function=hidden_function, epochs=400, include_bias=include_bias)
 
 
 def three_gauss_classification():
     train_path = 'datasets/projekt1/classification/data.three_gauss.train.500.csv'
     test_path = 'datasets/projekt1/classification/data.three_gauss.test.500.csv'
-    hidden_function = RELU
+    hidden_function = SIGMOID
     last_layer_function = SOFTMAX
     loss_function = CROSS_ENTROPY
     include_bias = True
@@ -108,7 +108,6 @@ def three_gauss_classification():
 
 
 if __name__ == '__main__':
-    warnings.warn_explicit()
     # activation_regression()
     # linear_regression()
     # square_regression()
