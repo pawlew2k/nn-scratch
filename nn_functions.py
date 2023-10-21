@@ -15,7 +15,13 @@ MSE = "MSE"
 MSLE = "MSLE"
 MAE = "MAE"
 CROSS_ENTROPY = "CROSS_ENTROPY"
-NLL = "NLL"
+
+# EPSILON TO ADD TO LOG OR DIVIDE WHEN INVALID VALUE WOULD BE ENCOUNTERED
+EPS = 1e-50
+
+
+def raise_(ex):
+    raise ex
 
 
 def relu(arr: np.ndarray):
@@ -76,19 +82,22 @@ ACTIVATION_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray], np.ndarray
     "SOFTMAX": lambda x: softmax_derivative(x)
 }
 
+
+def msle(target, actual):
+    t = np.where(np.logical_and(- EPS < target, target < EPS), EPS, target)
+    a = np.where(np.logical_and(- EPS < actual, actual < EPS), EPS, actual)
+    return np.mean((np.log(t) - np.log(a)) ** 2)
+
+
 LOSS_FUNCTION_DICT: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
-    # LOSS FUNCTIONS FOR REGRESSION
     # MEAN SQUARED ERROR
     "MSE": lambda target, actual: np.mean((target - actual) ** 2),
     # MEAN ABSOLUTE ERROR
     "MAE": lambda target, actual: np.mean(np.abs(actual - target)),
     # MEAN SQUARED LOGARITHMIC ERROR
-    "MSLE": lambda target, actual: np.mean((np.log(target + 1) - np.log(actual + 1)) ** 2),
-
-    # LOSS FUNCTIONS FOR CLASSIFICATION
-    "CROSS_ENTROPY": lambda target, actual: -np.sum(target * np.log(actual)),
-    # NEGATIVE LOG LIKELIHOOD
-    "NLL": lambda target, actual: -np.sum((target * np.log(actual) + (1 - target) * np.log(1 - actual)))
+    "MSLE": lambda target, actual: msle(target, actual),
+    # CROSS ENTROPY
+    "CROSS_ENTROPY": lambda target, actual: np.mean(-np.sum(target * np.log(actual), axis=1))
 }
 
 
@@ -101,15 +110,12 @@ def mae_derivative(target, actual):
 
 
 def msle_derivative(target, actual):
-    return 2 * (np.log(actual) - np.log(target + 1)) / (actual + 1)
+    t = np.where(np.logical_and(- EPS < target, target < EPS), EPS, target)
+    a = np.where(np.logical_and(- EPS < actual, actual < EPS), EPS, actual)
+    return 2 * (np.log(a) - np.log(t)) / a
 
 
-def cross_entropy_derivative(target, actual):
-    return actual - target
-
-
-def nll_derivative(target, actual):
-    # return (target - actual) / (actual * (1 - actual)) ?? increasing loss
+def delta_softmax_cross_entropy(target, actual):
     return actual - target
 
 
@@ -117,8 +123,7 @@ LOSS_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray, np.ndarray], np.n
     "MSE": lambda target, actual: mse_derivative(target, actual),
     "MAE": lambda target, actual: mae_derivative(target, actual),
     "MSLE": lambda target, actual: msle_derivative(target, actual),
-    "CROSS_ENTROPY": lambda target, actual: cross_entropy_derivative(target, actual),
-    "NLL": lambda target, actual: nll_derivative(target, actual)
+    "CROSS_ENTROPY": lambda target, actual: lambda x: raise_(Exception("PLAIN CROSS_ENTROPY DERIVATIVE NOT ALLOWED")),
 }
 
 

@@ -1,94 +1,122 @@
-import numpy as np
-from sklearn.metrics import classification_report
-from sklearn.preprocessing import LabelBinarizer
+import warnings
 
+from classification import classification
 from dataset import Dataset
 from neural_net import NeuralNet
-from nn_functions import *
-from visualizer import Visualizer
+from nn_functions import SIGMOID, LINEAR, MSE, TANH, MSLE, MAE, RELU, SOFTMAX, CROSS_ENTROPY
+from regression import regression
 
 
-# REGRESSION
-def regression():
-    # data loading and preparation
-    data = Dataset(path='datasets/projekt1/regression/data.cube.train.1000.csv')
-    data = data.to_numpy()
-    x = np.atleast_2d(data[:, 0]).T
-    y = np.atleast_2d(data[:, 1]).T
-    sigmoid_normalized = min_max_normalize(y, y.min(), y.max())
-    tanh_normalized = min_max_normalize(y, y.min(), y.max(), (-1, 1))
-
-    test_data = Dataset(path='datasets/projekt1/regression/data.cube.test.1000.csv')
-    test_data = test_data.to_numpy()
-    test_x = np.atleast_2d(test_data[:, 0]).T
-    test_y = np.atleast_2d(test_data[:, 1]).T
-
-    # net = NeuralNet([(1, ""), (4, SIGMOID), (1, LINEAR)], MSE, learning_rate=0.001) # activation
-    # net = NeuralNet([(1, ""), (1, LINEAR)], MSE)  # linear
+def activation_regression():
+    train_path = 'datasets/projekt1/regression/data.activation.train.500.csv'
+    test_path = 'datasets/projekt1/regression/data.activation.test.500.csv'
+    hidden_function = SIGMOID
+    last_layer_function = LINEAR
+    loss_function = MSE
+    include_bias = False
 
     # create neural network
-    model = NeuralNet([(1, ""), (16, SIGMOID), (16, SIGMOID), (1, LINEAR)], MSE)  # cubic
-
-    # train neural network
-    print("[INFO] training network...")
-    model.train(x, sigmoid_normalized, epochs=100, learning_rate=0.01)
-
-    # cubic
-    # net.train(x, sigmoid_normalized, epochs=2000, learning_rate=0.01)
-
-    # evaluate network
-    print("[INFO] evaluating network...")
-    prepare_test_x = np.atleast_2d(test_x)
-    prepare_test_x = np.c_[prepare_test_x, np.ones((prepare_test_x.shape[0]))]
-
-    predictions = model.predict(prepare_test_x)
-
-    test_y_sigmoid_normalized = min_max_normalize(test_y, y.min(), y.max())
-    test_y_tanh_normalized = min_max_normalize(test_y, y.min(), y.max(), (-1, 1))
-    print(f"loss: {2 * model.loss(test_y_sigmoid_normalized, predictions) / len(test_y)}")
+    model = NeuralNet([(1, ""), (8, hidden_function), (1, last_layer_function)], loss_function,
+                      include_bias=include_bias)
+    regression(train_path, test_path, model, hidden_function, epochs=300, include_bias=include_bias)
 
 
-# CLASSIFICATION
-def classification():
-    # data loading and preparation
-    data = Dataset(path='datasets/projekt1/classification/data.three_gauss.test.100.csv')
-    data = data.to_numpy()
-    train_x = np.atleast_2d(data[:, :2])
-    train_y = data[:, -1]
-
-    test_data = Dataset(path='datasets/projekt1/classification/data.three_gauss.test.100.csv')
-    test_data = test_data.to_numpy()
-    test_x = test_data[:, :2]
-    test_y = test_data[:, -1]
-
-    # convert classification from integers to vectors
-    train_y = LabelBinarizer().fit_transform(train_y)
-    test_y = LabelBinarizer().fit_transform(test_y)
-
-    # print(test_x, train_x.shape[1])
-    # print(test_y, train_y.shape[1])
+def cube_regression():
+    train_path = 'datasets/projekt1/regression/data.cube.train.500.csv'
+    test_path = 'datasets/projekt1/regression/data.cube.test.500.csv'
+    hidden_function = SIGMOID
+    last_layer_function = LINEAR
+    loss_function = MSE
+    include_bias = True
 
     # create neural network
-    model = NeuralNet([(train_x.shape[1], ""), (16, SIGMOID), (train_y.shape[1], SIGMOID)], MSE)
+    model = NeuralNet([(1, ""), (32, hidden_function), (16, hidden_function), (1, last_layer_function)], loss_function,
+                      include_bias=include_bias)
+    regression(train_path, test_path, model, hidden_function=hidden_function, epochs=1000, include_bias=include_bias)
 
-    # train neural network
-    print("[INFO] training network...")
-    model.train(train_x, train_y, epochs=100, learning_rate=0.01)
 
-    # evaluate network
-    print("[INFO] evaluating network...")
-    Visualizer.show_prediction(model,
-                               Dataset(path='datasets/projekt1/classification/data.three_gauss.test.100.csv'),
-                               savefig=False, path='plots/predict_classification/example.jpg')
-    prepare_test_x = np.atleast_2d(test_x)
-    prepare_test_x = np.c_[prepare_test_x, np.ones((prepare_test_x.shape[0]))]
+def linear_regression():
+    train_path = 'datasets/projekt1-oddanie/regression/data.linear.train.500.csv'
+    test_path = 'datasets/projekt1-oddanie/regression/data.linear.test.500.csv'
+    hidden_function = SIGMOID
+    last_layer_function = LINEAR
+    loss_function = MSE
+    include_bias = True
 
-    predictions = model.predict(prepare_test_x)
+    # create neural network
+    model = NeuralNet([(1, ""), (8, hidden_function), (1, last_layer_function)], loss_function,
+                      include_bias=include_bias)
+    regression(train_path, test_path, model, hidden_function=hidden_function, epochs=500, include_bias=include_bias)
 
-    predictions = predictions.argmax(axis=1)
-    print(classification_report(test_y.argmax(axis=1), predictions))
+
+def multimodal_regression():
+    train_path = 'datasets/projekt1-oddanie/regression/data.multimodal.train.500.csv'
+    test_path = 'datasets/projekt1-oddanie/regression/data.multimodal.test.500.csv'
+    hidden_function = SIGMOID
+    last_layer_function = LINEAR
+    loss_function = MSE
+    include_bias = True
+
+    # create neural network
+    model = NeuralNet([(1, ""), (128, hidden_function), (64, hidden_function), (32, hidden_function),
+                       (16, hidden_function), (1, last_layer_function)], loss_function,
+                      include_bias=include_bias)
+    regression(train_path, test_path, model, hidden_function=hidden_function, epochs=1000, include_bias=include_bias)
+
+
+def square_regression():
+    train_path = 'datasets/projekt1-oddanie/regression/data.square.train.500.csv'
+    test_path = 'datasets/projekt1-oddanie/regression/data.square.test.500.csv'
+    hidden_function = SIGMOID
+    last_layer_function = LINEAR
+    loss_function = MSE
+    include_bias = True
+
+    # create neural network
+    model = NeuralNet([(1, ""), (32, hidden_function),
+                       (16, hidden_function), (1, last_layer_function)], loss_function,
+                      include_bias=include_bias)
+    regression(train_path, test_path, model, hidden_function=hidden_function, epochs=1000, include_bias=include_bias)
+
+
+def simple_classification():
+    train_path = 'datasets/projekt1/classification/data.simple.train.500.csv'
+    test_path = 'datasets/projekt1/classification/data.simple.test.500.csv'
+    hidden_function = RELU
+    last_layer_function = SOFTMAX
+    loss_function = CROSS_ENTROPY
+    include_bias = True
+
+    # create neural network
+    model = NeuralNet([(2, ""), (4, hidden_function), (2, last_layer_function)], loss_function,
+                      include_bias=include_bias)
+    classification(train_path, test_path, model, hidden_function=hidden_function, epochs=10, include_bias=include_bias)
+
+
+def three_gauss_classification():
+    train_path = 'datasets/projekt1/classification/data.three_gauss.train.500.csv'
+    test_path = 'datasets/projekt1/classification/data.three_gauss.test.500.csv'
+    hidden_function = RELU
+    last_layer_function = SOFTMAX
+    loss_function = CROSS_ENTROPY
+    include_bias = True
+
+    # create neural network
+    model = NeuralNet([(2, ""), (16, hidden_function), (3, last_layer_function)], loss_function,
+                      include_bias=include_bias)
+    classification(train_path, test_path, model, hidden_function=hidden_function, epochs=400, include_bias=include_bias)
 
 
 if __name__ == '__main__':
-    # regression()
-    classification()
+    warnings.warn_explicit()
+    # activation_regression()
+    # linear_regression()
+    # square_regression()
+    # cube_regression()
+    # multimodal_regression()
+
+    # classification()
+    simple_classification()
+    # three_gauss_classification()
+
+# examples

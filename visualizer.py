@@ -56,14 +56,16 @@ class Visualizer:
         network.draw(savefig, path)
 
     @staticmethod
-    def show_prediction(net: NeuralNet, dataset: DataFrame, savefig: bool = False, path: str = None):
+    def show_prediction(net: NeuralNet, dataset: DataFrame, savefig: bool = False, path: str = None,
+                        include_bias: bool = True):
         Visualizer.show_dataset(dataset, hold_plot=True)
         if hasattr(dataset, 'name'):
             plt.title(f"Prediction dataset: '{dataset.name}'")
         if dataset.task == 'regression':
             x = dataset.x
             prepared_x = [np.atleast_2d(datum) for datum in x]
-            prepared_x = [np.c_[datum, np.ones((datum.shape[0]))] for datum in prepared_x]
+            if include_bias:
+                prepared_x = [np.c_[datum, np.ones((datum.shape[0]))] for datum in prepared_x]
             # print(prepared_x)
             y = [net.predict(datum) for datum in prepared_x]
             y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y)
@@ -81,7 +83,7 @@ class Visualizer:
                 print(predicted_labels)
                 for x_datum, y_datum, pred_label in zip(x, y, predicted_labels):
                     if pred_label != label:
-                        plt.scatter(x_datum, y_datum, marker='.', s=20, color=colors[pred_label-1])
+                        plt.scatter(x_datum, y_datum, marker='.', s=20, color=colors[pred_label - 1])
                         plt.scatter(x_datum, y_datum, marker='x', s=40, color='red', linewidths=0.6)
         else:
             raise Exception('Task in dataset undefined')
