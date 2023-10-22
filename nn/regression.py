@@ -9,7 +9,8 @@ default_plot_path = '../plots/predict_regression/example.jpg'
 # REGRESSION
 def regression(train_path: str, test_path: str, model: NeuralNet, hidden_function: str,
                epochs: int = 1000, learning_rate: float = 0.01, include_bias: bool = True,
-               plot_path: str = default_plot_path):
+               plot_path: str = default_plot_path, savefig: bool = False,
+               display_information=None):
     # load data
     train_x, train_y, test_x, test_y = prepare_data_for_regression(train_path, test_path, hidden_function, include_bias)
 
@@ -19,7 +20,8 @@ def regression(train_path: str, test_path: str, model: NeuralNet, hidden_functio
 
     # predict and evaluate network
     return predict_and_evaluate_regression(model, test_path, test_x, test_y, include_bias=include_bias,
-                                           plot_path=plot_path)
+                                           plot_path=plot_path, savefig=savefig,
+                                           display_information=display_information)
 
 
 def prepare_data_for_regression(train_path: str, test_path: str, hidden_function: str = SIGMOID,
@@ -54,12 +56,13 @@ def prepare_data_for_regression(train_path: str, test_path: str, hidden_function
 
 
 def predict_and_evaluate_regression(model, test_path, test_x, test_y, include_bias: bool = True,
-                                    plot_path: str = default_plot_path):
+                                    plot_path: str = default_plot_path, savefig: bool = False,
+                                    display_information=None):
     print("[INFO] evaluating network...")
     Visualizer.show_prediction(model,
                                Dataset(path=test_path),
-                               savefig=False, path=plot_path,
-                               include_bias=include_bias)
+                               savefig=savefig, path=plot_path,
+                               include_bias=include_bias, display_information=display_information)
 
     predictions = model.predict(test_x)
     print(f"loss: {model.loss(test_y, predictions)}")

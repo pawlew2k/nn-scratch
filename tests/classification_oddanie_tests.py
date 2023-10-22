@@ -3,6 +3,7 @@ from nn.neural_net import NeuralNet
 from nn.nn_functions import SIGMOID, LINEAR, MSE, RELU, SOFTMAX, CROSS_ENTROPY
 from nn.regression import regression
 
+
 def circles_classification():
     train_path = 'datasets/projekt1-oddanie/classification/data.circles.train.500.csv'
     test_path = 'datasets/projekt1-oddanie/classification/data.circles.test.500.csv'
@@ -15,7 +16,8 @@ def circles_classification():
 
     # create neural network
     model = NeuralNet(
-        [(x_dim, ""), (16, hidden_function), (8, hidden_function), (y_dim, last_layer_function)], loss_function, include_bias=include_bias)
+        [(x_dim, ""), (16, hidden_function), (8, hidden_function), (y_dim, last_layer_function)], loss_function,
+        include_bias=include_bias)
     classification(train_path, test_path, model, hidden_function=hidden_function, epochs=500,
                    include_bias=include_bias)
 

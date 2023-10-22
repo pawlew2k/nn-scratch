@@ -57,10 +57,13 @@ class Visualizer:
 
     @staticmethod
     def show_prediction(net: NeuralNet, dataset: DataFrame, savefig: bool = False, path: str = None,
-                        include_bias: bool = True):
+                        include_bias: bool = True, display_information=None):
         Visualizer.show_dataset(dataset, hold_plot=True)
         if hasattr(dataset, 'name'):
-            plt.title(f"Prediction dataset: '{dataset.name}'")
+            if display_information is not None:
+                plt.title(f"Prediction dataset: '{display_information}'")
+            else:
+                plt.title(f"Prediction dataset: '{dataset.name}'")
         if dataset.task == 'regression':
             x = dataset.x
             prepared_x = [np.atleast_2d(datum) for datum in x]
@@ -78,7 +81,8 @@ class Visualizer:
                 x = dataset.loc[dataset['cls'] == label].x
                 y = dataset.loc[dataset['cls'] == label].y
                 x_y = np.atleast_2d(list(zip(x, y)))
-                x_y = np.c_[x_y, np.ones((x_y.shape[0]))]
+                if include_bias:
+                    x_y = np.c_[x_y, np.ones((x_y.shape[0]))]
                 predicted_labels = net.predict(x_y, task='classification')
                 print(predicted_labels)
                 for x_datum, y_datum, pred_label in zip(x, y, predicted_labels):
