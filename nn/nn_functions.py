@@ -15,6 +15,7 @@ MSE = "MSE"
 MSLE = "MSLE"
 MAE = "MAE"
 CROSS_ENTROPY = "CROSS_ENTROPY"
+HINGE = "HINGE"
 
 # EPSILON TO ADD TO LOG OR DIVIDE WHEN INVALID VALUE WOULD BE ENCOUNTERED
 EPS = 1e-50
@@ -47,12 +48,12 @@ def softmax(arr: np.ndarray):
 
 
 ACTIVATION_FUNCTION_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
-    "RELU": lambda x: relu(x),
-    "SIGMOID": lambda x: sigmoid(x),
-    "TANH": lambda x: tanh(x),
-    "LINEAR": lambda x: x,
-    "BINARY_STEP": lambda x: binary_step(x),
-    "SOFTMAX": lambda x: softmax(x)
+    RELU: lambda x: relu(x),
+    SIGMOID: lambda x: sigmoid(x),
+    TANH: lambda x: tanh(x),
+    LINEAR: lambda x: x,
+    BINARY_STEP: lambda x: binary_step(x),
+    SOFTMAX: lambda x: softmax(x)
 }
 
 
@@ -74,12 +75,12 @@ def softmax_derivative(arr: np.ndarray):
 
 # input to activation function derivative is the output of layer (sums that went through activation function)
 ACTIVATION_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
-    "RELU": lambda x: relu_derivative(x),
-    "SIGMOID": lambda x: sigmoid_derivative(x),
-    "TANH": lambda x: tanh_derivative(x),
-    "LINEAR": lambda x: np.ones_like(x),
-    "BINARY_STEP": lambda x: np.zeros_like(x),
-    "SOFTMAX": lambda x: softmax_derivative(x)
+    RELU: lambda x: relu_derivative(x),
+    SIGMOID: lambda x: sigmoid_derivative(x),
+    TANH: lambda x: tanh_derivative(x),
+    LINEAR: lambda x: np.ones_like(x),
+    BINARY_STEP: lambda x: np.zeros_like(x),
+    SOFTMAX: lambda x: softmax_derivative(x)
 }
 
 
@@ -91,13 +92,15 @@ def msle(target, actual):
 
 LOSS_FUNCTION_DICT: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
     # MEAN SQUARED ERROR
-    "MSE": lambda target, actual: np.mean((target - actual) ** 2),
+    MSE: lambda target, actual: np.mean((target - actual) ** 2),
     # MEAN ABSOLUTE ERROR
-    "MAE": lambda target, actual: np.mean(np.abs(actual - target)),
+    MAE: lambda target, actual: np.mean(np.abs(actual - target)),
     # MEAN SQUARED LOGARITHMIC ERROR
-    "MSLE": lambda target, actual: msle(target, actual),
+    MSLE: lambda target, actual: msle(target, actual),
     # CROSS ENTROPY
-    "CROSS_ENTROPY": lambda target, actual: np.mean(-np.sum(target * np.log(actual), axis=1))
+    CROSS_ENTROPY: lambda target, actual: np.mean(-np.sum(target * np.log(actual), axis=1)),
+    # HINGE LOSS
+    HINGE: lambda target, actual: np.mean(np.mean(np.maximum(0, 1 - target * actual), axis=1))
 }
 
 
@@ -120,10 +123,11 @@ def delta_softmax_cross_entropy(target, actual):
 
 
 LOSS_FUNCTION_DERIVATIVE_DICT: dict[str, Callable[[np.ndarray, np.ndarray], np.ndarray]] = {
-    "MSE": lambda target, actual: mse_derivative(target, actual),
-    "MAE": lambda target, actual: mae_derivative(target, actual),
-    "MSLE": lambda target, actual: msle_derivative(target, actual),
-    "CROSS_ENTROPY": lambda target, actual: lambda x: raise_(Exception("PLAIN CROSS_ENTROPY DERIVATIVE NOT ALLOWED")),
+    MSE: lambda target, actual: mse_derivative(target, actual),
+    MAE: lambda target, actual: mae_derivative(target, actual),
+    MSLE: lambda target, actual: msle_derivative(target, actual),
+    CROSS_ENTROPY: lambda target, actual: lambda x: raise_(Exception("PLAIN CROSS_ENTROPY DERIVATIVE NOT ALLOWED")),
+    HINGE: lambda target, actual: np.where(actual * target < 1, -target / actual.size, 0)
 }
 
 
@@ -140,12 +144,12 @@ def he_heuristic(in_size):
 
 
 WEIGHT_HEURISTICS: dict[str, Callable[[int, int], float]] = {
-    "RELU": lambda in_size, out_size: he_heuristic(in_size),
-    "SIGMOID": lambda in_size, out_size: xavier_heuristic(in_size),
-    "TANH": lambda in_size, out_size: xavier_heuristic(in_size),
-    "LINEAR": lambda in_size, out_size: he_heuristic(in_size),
-    "BINARY_STEP": lambda in_size, out_size: xavier_heuristic(in_size),
-    "SOFTMAX": lambda in_size, out_size: xavier_heuristic(in_size)
+    RELU: lambda in_size, out_size: he_heuristic(in_size),
+    SIGMOID: lambda in_size, out_size: xavier_heuristic(in_size),
+    TANH: lambda in_size, out_size: xavier_heuristic(in_size),
+    LINEAR: lambda in_size, out_size: he_heuristic(in_size),
+    BINARY_STEP: lambda in_size, out_size: xavier_heuristic(in_size),
+    SOFTMAX: lambda in_size, out_size: xavier_heuristic(in_size)
 }
 
 

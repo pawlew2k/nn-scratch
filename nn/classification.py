@@ -9,19 +9,22 @@ from visualization.visualizer import Visualizer
 
 
 # CLASSIFICATION
-def classification(train_path: str, test_path: str, model: NeuralNet, hidden_function: str,
+def classification(train_path: str, test_path: str, model: NeuralNet, loss_function: str = "None",
                    epochs: int = 1000, learning_rate: float = 0.01, include_bias: bool = True,
                    plot_path: str = '../plots/predict_classification/example.jpg', savefig: bool = False,
-                   display_information=None, model_path: str = '/models/predict_classification/example.json', save_model:bool=False):
+                   display_information=None, model_path: str = '/models/predict_classification/example.json',
+                   save_model: bool = False):
     # load data
-    train_x, train_y, test_x, test_y = prepare_data_for_classification(train_path, test_path, include_bias=include_bias)
+    train_x, train_y, test_x, test_y = prepare_data_for_classification(train_path, test_path, include_bias=include_bias,
+                                                                       loss_function=loss_function)
 
     # train neural network
     print("[INFO] training network...")
     model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias)
 
     # save model
-    serialize_model(model, model_path)
+    if save_model:
+        serialize_model(model, model_path)
 
     # predict and evaluate network
     return predict_and_evaluate_classification(model, test_path, test_x, test_y, include_bias=include_bias,
@@ -29,7 +32,8 @@ def classification(train_path: str, test_path: str, model: NeuralNet, hidden_fun
                                                display_information=display_information)
 
 
-def prepare_data_for_classification(train_path: str, test_path: str, include_bias: bool = True):
+def prepare_data_for_classification(train_path: str, test_path: str, include_bias: bool = True,
+                                    loss_function: str = "None"):
     # data loading and preparation
     data = Dataset(path=train_path)
 
@@ -54,6 +58,10 @@ def prepare_data_for_classification(train_path: str, test_path: str, include_bia
 
     if include_bias:
         test_x = np.c_[test_x, np.ones((test_x.shape[0]))]
+
+    if loss_function == HINGE:
+        test_y = np.where(test_y == 0, -1, 1)
+        train_y = np.where(train_y == 0, -1, 1)
 
     return train_x, train_y, test_x, test_y
 
