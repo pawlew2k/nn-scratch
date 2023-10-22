@@ -1,7 +1,7 @@
-from nn.classification import classification, check_classification_dimensions
 from nn.neural_net import NeuralNet
 from nn.nn_functions import SIGMOID, LINEAR, MSE, RELU, SOFTMAX, CROSS_ENTROPY
 from nn.regression import regression
+
 
 def linear_regression():
     train_path = 'datasets/projekt1-oddanie/regression/data.linear.train.500.csv'

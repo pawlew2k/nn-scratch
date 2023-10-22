@@ -46,7 +46,7 @@ def classification_mass_tests():
 
                                         display_information = f"name={key}, dataset={dataset}, hl={hidden_layers}, nl={node_in_layer},\nhf={hidden_function}, ll={ll}, epoch={no_epoch}, rate={learning_rate}, bias={bias}"
 
-                                        classification(train_path, test_path, model, hidden_function=hidden_function,
+                                        classification(train_path, test_path, model, loss_function=ll[1],
                                                        epochs=no_epoch, learning_rate=learning_rate, include_bias=bias,
                                                        plot_path=plot_path, savefig=True,
                                                        display_information=display_information, model_path=model_path,
