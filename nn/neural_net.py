@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.metrics import f1_score
 
 import nn.nn_functions
 from nn.nn_functions import *
@@ -12,11 +12,9 @@ class TaskType(Enum):
 
 
 class TrainingReport:
-    def __init__(self, epoch, loss, precision=None, recall=None, f1=None, mse=None):
+    def __init__(self, epoch, loss, f1=None, mse=None):
         self.epoch = epoch
         self.loss = loss
-        self.precision = precision
-        self.recall = recall
         self.f1 = f1
         self.mse = mse
 
@@ -179,8 +177,6 @@ class NeuralNet:
             targets_classes = target_values.argmax(axis=1)
             predictions_classes = predictions.argmax(axis=1)
             report.f1 = f1_score(targets_classes, predictions_classes, average='macro')
-            report.precision = precision_score(targets_classes, predictions_classes, average='macro')
-            report.recall = recall_score(targets_classes, predictions_classes, average='macro')
 
         self.training_report.append(report)
 

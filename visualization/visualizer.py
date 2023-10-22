@@ -12,10 +12,6 @@ from pandas.core.frame import DataFrame
 from nn.neural_net import NeuralNet, TaskType, TrainingReport
 
 
-def report_mapper(report: TrainingReport):
-    return report.epoch, report.loss, report.mse, report.precision, report.recall, report.f1
-
-
 class Visualizer:
     @staticmethod
     def show_dataset(dataset: DataFrame, savefig: bool = False, hold_plot=False):
@@ -105,32 +101,32 @@ class Visualizer:
             plt.show()
 
     @staticmethod
-    def show_metrics(net: NeuralNet, savefig: bool = False, path: str = None, display_information=None):
+    def show_metrics(net: NeuralNet, savefig: bool = False, path: str = None, display_information=None, loss=None,
+                     f1=None):
         if display_information is not None:
-            plt.title(f"Prediction dataset: '{display_information}'")
+            plt.title(f"Metrics: '{display_information}'")
 
         epochs = []
-        loss = []
+        losses = []
         mse = []
-        precision = []
-        recall = []
-        f1 = []
+        f1s = []
 
         for report in net.training_report:
             epochs.append(report.epoch)
-            loss.append(report.loss)
+            losses.append(report.loss)
             mse.append(report.mse)
-            precision.append(report.precision)
-            recall.append(report.recall)
-            f1.append(report.f1)
+            f1s.append(report.f1)
 
-        plt.plot(epochs, loss)
+        plt.plot(epochs, losses)
 
-        if net.task_type == TaskType.REGRESSION:
-            plt.plot(epochs, mse)
-        elif net.task_type == TaskType.CLASSIFICATION:
-            plt.plot(epochs, f1)
+        plt.title(f"loss on test set: {loss}\nf1 on test set: {f1}")
+        plt.xlabel("epochs")
 
+        if net.task_type == TaskType.CLASSIFICATION:
+            plt.plot(epochs, f1s)
+            plt.legend(['loss', 'f1'])
+        elif net.task_type == TaskType.REGRESSION:
+            plt.legend(['loss'])
         else:
             raise Exception('Task in model is undefined')
 
