@@ -7,8 +7,8 @@ from tests.regression_tests import activation_regression
 if __name__ == '__main__':
     # activation_regression()
 
-    # simple_classification()
+    simple_classification()
     # three_gauss_classification()
 
-    classification_mass_tests()
-    regression_mass_tests()
+    # classification_mass_tests()
+    # regression_mass_tests()

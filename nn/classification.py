@@ -4,6 +4,7 @@ from sklearn.preprocessing import LabelBinarizer
 from dataset import Dataset
 from nn.neural_net import NeuralNet
 from nn.nn_functions import *
+from nn.nn_serializer import serialize_model
 from visualization.visualizer import Visualizer
 
 
@@ -11,13 +12,16 @@ from visualization.visualizer import Visualizer
 def classification(train_path: str, test_path: str, model: NeuralNet, hidden_function: str,
                    epochs: int = 1000, learning_rate: float = 0.01, include_bias: bool = True,
                    plot_path: str = '../plots/predict_classification/example.jpg', savefig: bool = False,
-                   display_information=None):
+                   display_information=None, model_path: str = '/models/predict_classification/example.json', save_model:bool=False):
     # load data
     train_x, train_y, test_x, test_y = prepare_data_for_classification(train_path, test_path, include_bias=include_bias)
 
     # train neural network
     print("[INFO] training network...")
     model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias)
+
+    # save model
+    serialize_model(model, model_path)
 
     # predict and evaluate network
     return predict_and_evaluate_classification(model, test_path, test_x, test_y, include_bias=include_bias,

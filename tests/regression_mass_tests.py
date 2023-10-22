@@ -15,14 +15,12 @@ no_of_train_data = [100, 500, 1000, 10000]
 include_bias_arr = [False, True]
 
 paths = {
-    'simple': 'datasets/projekt1/regression/data.activation.',
-    'three_gauss': 'datasets/projekt1/regression/data.cube.',
-    'circles': 'datasets/projekt1-oddanie/regression/data.linear.',
-    'noisyXOR': 'datasets/projekt1-oddanie/regression/data.multimodal.',
-    'XOR': 'datasets/projekt1-oddanie/regression/data.square.'
+    'activation': 'datasets/projekt1/regression/data.activation.',
+    'cube': 'datasets/projekt1/regression/data.cube.',
+    'linear': 'datasets/projekt1-oddanie/regression/data.linear.',
+    'multimodal': 'datasets/projekt1-oddanie/regression/data.multimodal.',
+    'square': 'datasets/projekt1-oddanie/regression/data.square.'
 }
-
-plots_default_path = '../plots/predict_regression'
 
 
 def regression_mass_tests():
@@ -38,6 +36,7 @@ def regression_mass_tests():
                                 for learning_rate in learning_rates:
                                     for bias in include_bias_arr:
                                         plot_path = f'plots/predict_regression/{key}/dataset={dataset}_hl={hidden_layers}_nl={node_in_layer}_hf={hidden_function}_ll={ll}_epoch={no_epoch}_rate={learning_rate}_bias={bias}.jpg'
+                                        model_path = f'/models/predict_regression/{key}/dataset={dataset}_hl={hidden_layers}_nl={node_in_layer}_hf={hidden_function}_ll={ll}_epoch={no_epoch}_rate={learning_rate}_bias={bias}.json'
                                         neural_net_layers = [(1, "")]
                                         for _ in range(hidden_layers):
                                             neural_net_layers.append((node_in_layer, hidden_function))
@@ -49,4 +48,5 @@ def regression_mass_tests():
                                         regression(train_path, test_path, model, hidden_function=hidden_function,
                                                    epochs=no_epoch, learning_rate=learning_rate, include_bias=bias,
                                                    plot_path=plot_path, savefig=True,
-                                                   display_information=display_information)
+                                                   display_information=display_information, model_path=model_path,
+                                                   save_model=True)

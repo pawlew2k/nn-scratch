@@ -22,8 +22,6 @@ paths = {
     'XOR': 'datasets/projekt1-oddanie/classification/data.XOR.'
 }
 
-plots_default_path = '../plots/predict_classification'
-
 
 def classification_mass_tests():
     for key in paths:
@@ -38,6 +36,7 @@ def classification_mass_tests():
                                 for learning_rate in learning_rates:
                                     for bias in include_bias_arr:
                                         plot_path = f'plots/predict_classification/{key}/dataset={dataset}_hl={hidden_layers}_nl={node_in_layer}_hf={hidden_function}_ll={ll}_epoch={no_epoch}_rate={learning_rate}_bias={bias}.jpg'
+                                        model_path = f'models/predict_classification/{key}/dataset={dataset}_hl={hidden_layers}_nl={node_in_layer}_hf={hidden_function}_ll={ll}_epoch={no_epoch}_rate={learning_rate}_bias={bias}.json'
                                         x_dim, y_dim = check_classification_dimensions(train_path)
                                         neural_net_layers = [(x_dim, "")]
                                         for _ in range(hidden_layers):
@@ -50,4 +49,5 @@ def classification_mass_tests():
                                         classification(train_path, test_path, model, hidden_function=hidden_function,
                                                        epochs=no_epoch, learning_rate=learning_rate, include_bias=bias,
                                                        plot_path=plot_path, savefig=True,
-                                                       display_information=display_information)
+                                                       display_information=display_information, model_path=model_path,
+                                                       save_model=True)

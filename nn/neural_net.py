@@ -3,6 +3,7 @@ from nn.nn_functions import *
 
 class Layer:
     def __init__(self, in_size: int, out_size: int, activ_func: str, is_last: bool = False, include_bias: bool = True):
+        self.activ_func_name = activ_func
         self.activ_func = ACTIVATION_FUNCTION_DICT[activ_func]
         self.activ_func_deriv = ACTIVATION_FUNCTION_DERIVATIVE_DICT[activ_func]
         self.is_last = is_last
@@ -30,7 +31,6 @@ class Layer:
 
     def get_gradient(self):
         return self.gradient[0:-1, 0:-1] if not self.is_last else self.gradient[0:-1, :]
-
 
 class NeuralNet:
     def __init__(self, layers: list[(int, str)], loss_func: str, seed: int = 42, include_bias: bool = True):
