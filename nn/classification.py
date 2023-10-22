@@ -1,4 +1,4 @@
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, f1_score
 from sklearn.preprocessing import LabelBinarizer
 
 from dataset import Dataset
@@ -77,10 +77,16 @@ def predict_and_evaluate_classification(model, test_path, test_x, test_y, includ
                                display_information=display_information)
 
     predictions = model.predict(test_x)
-    print(f"loss: {model.loss(test_y, predictions)}")
+    loss = model.loss(test_y, predictions)
+    print(f"loss: {loss}")
 
     predictions = predictions.argmax(axis=1)
-    print(classification_report(test_y.argmax(axis=1), predictions))
+    f1 = f1_score(test_y.argmax(axis=1), predictions)
+    print()
+
+    Visualizer.show_metrics(model,
+                            savefig=False, path=plot_path,
+                            display_information=display_information, loss=loss, f1=f1)
 
     return predictions
 

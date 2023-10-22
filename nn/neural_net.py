@@ -1,4 +1,22 @@
+from enum import Enum
+
+from sklearn.metrics import f1_score
+
+import nn.nn_functions
 from nn.nn_functions import *
+
+
+class TaskType(Enum):
+    CLASSIFICATION = "CLASSIFICATION",
+    REGRESSION = "REGRESSION"
+
+
+class TrainingReport:
+    def __init__(self, epoch, loss, f1=None, mse=None):
+        self.epoch = epoch
+        self.loss = loss
+        self.f1 = f1
+        self.mse = mse
 
 
 class Layer:
@@ -32,13 +50,18 @@ class Layer:
     def get_gradient(self):
         return self.gradient[0:-1, 0:-1] if not self.is_last else self.gradient[0:-1, :]
 
+
 class NeuralNet:
-    def __init__(self, layers: list[(int, str)], loss_func: str, seed: int = 42, include_bias: bool = True):
+    def __init__(self, layers: list[(int, str)], loss_func: str, seed: int = 42, include_bias: bool = True,
+                 task_type: TaskType = None):
         self.net_structure = list(zip(*layers))[0]
         self.learning_rate = 0.001
         self.loss = LOSS_FUNCTION_DICT[loss_func]
         self.loss_deriv = LOSS_FUNCTION_DERIVATIVE_DICT[loss_func]
         self.loss_name = loss_func
+
+        self.training_report: list[TrainingReport] = []
+        self.task_type = task_type
 
         # initialize Layers
         np.random.seed(seed)
@@ -143,10 +166,21 @@ class NeuralNet:
 
     # show update during training
     def show_update_mid_training(self, epoch, display_update, training_data, target_values):
+        targets = np.atleast_2d(target_values)
+        predictions = self.predict(training_data, return_probs=True)
+        loss = self.loss(targets, predictions)
+        mse = nn.nn_functions.LOSS_FUNCTION_DICT[MSE](targets, predictions)
+
+        report = TrainingReport(loss=loss, epoch=epoch, mse=mse)
+
+        if self.task_type == TaskType.CLASSIFICATION:
+            targets_classes = target_values.argmax(axis=1)
+            predictions_classes = predictions.argmax(axis=1)
+            report.f1 = f1_score(targets_classes, predictions_classes, average='macro')
+
+        self.training_report.append(report)
+
         if epoch == 0 or (epoch + 1) % display_update == 0:
-            targets = np.atleast_2d(target_values)
-            predictions = self.predict(training_data, return_probs=True)
-            loss = self.loss(targets, predictions)
             print(f'[INFO] epoch={epoch + 1}, loss={loss:.7f}')
 
     # predict an output based on input x

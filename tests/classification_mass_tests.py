@@ -1,5 +1,5 @@
 from nn.classification import check_classification_dimensions, classification
-from nn.neural_net import NeuralNet
+from nn.neural_net import NeuralNet, TaskType
 from nn.nn_functions import TANH, SIGMOID, RELU, MSE, CROSS_ENTROPY, SOFTMAX
 
 epochs = [10, 100, 300, 500, 1000, 2000]
@@ -36,13 +36,13 @@ def classification_mass_tests():
                                 for learning_rate in learning_rates:
                                     for bias in include_bias_arr:
                                         plot_path = f'plots/predict_classification/{key}/dataset={dataset}_hl={hidden_layers}_nl={node_in_layer}_hf={hidden_function}_ll={ll}_epoch={no_epoch}_rate={learning_rate}_bias={bias}.jpg'
-                                        model_path = f'models/predict_classification/{key}/dataset={dataset}_hl={hidden_layers}_nl={node_in_layer}_hf={hidden_function}_ll={ll}_epoch={no_epoch}_rate={learning_rate}_bias={bias}.json'
+                                        model_path = f'/models/predict_classification/{key}/dataset={dataset}_hl={hidden_layers}_nl={node_in_layer}_hf={hidden_function}_ll={ll}_epoch={no_epoch}_rate={learning_rate}_bias={bias}.json'
                                         x_dim, y_dim = check_classification_dimensions(train_path)
                                         neural_net_layers = [(x_dim, "")]
                                         for _ in range(hidden_layers):
                                             neural_net_layers.append((node_in_layer, hidden_function))
                                         neural_net_layers.append((y_dim, ll[0]))
-                                        model = NeuralNet(neural_net_layers, ll[1], include_bias=bias)
+                                        model = NeuralNet(neural_net_layers, ll[1], include_bias=bias, task_type=TaskType.CLASSIFICATION)
 
                                         display_information = f"name={key}, dataset={dataset}, hl={hidden_layers}, nl={node_in_layer},\nhf={hidden_function}, ll={ll}, epoch={no_epoch}, rate={learning_rate}, bias={bias}"
 

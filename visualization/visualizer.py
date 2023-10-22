@@ -9,7 +9,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from nn.neural_net import NeuralNet
+from nn.neural_net import NeuralNet, TaskType, TrainingReport
 
 
 class Visualizer:
@@ -91,6 +91,44 @@ class Visualizer:
                         plt.scatter(x_datum, y_datum, marker='x', s=40, color='red', linewidths=0.6)
         else:
             raise Exception('Task in dataset undefined')
+
+        if savefig:
+            if path:
+                Visualizer.save_fig(path)
+            else:
+                raise Exception('Path needed to save')
+        else:
+            plt.show()
+
+    @staticmethod
+    def show_metrics(net: NeuralNet, savefig: bool = False, path: str = None, display_information=None, loss=None,
+                     f1=None):
+        if display_information is not None:
+            plt.title(f"Metrics: '{display_information}'")
+
+        epochs = []
+        losses = []
+        mse = []
+        f1s = []
+
+        for report in net.training_report:
+            epochs.append(report.epoch)
+            losses.append(report.loss)
+            mse.append(report.mse)
+            f1s.append(report.f1)
+
+        plt.plot(epochs, losses)
+
+        plt.title(f"loss on test set: {loss}\nf1 on test set: {f1}")
+        plt.xlabel("epochs")
+
+        if net.task_type == TaskType.CLASSIFICATION:
+            plt.plot(epochs, f1s)
+            plt.legend(['loss', 'f1'])
+        elif net.task_type == TaskType.REGRESSION:
+            plt.legend(['loss'])
+        else:
+            raise Exception('Task in model is undefined')
 
         if savefig:
             if path:
