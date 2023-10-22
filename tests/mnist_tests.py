@@ -6,8 +6,8 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 
-from neural_net import NeuralNet
-from nn_functions import RELU, TANH, LINEAR, MSE, SIGMOID
+from nn.neural_net import NeuralNet
+from nn.nn_functions import TANH, LINEAR, MSE, SIGMOID
 
 
 #### MNIST CLASSIFICATION

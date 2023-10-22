@@ -1,5 +1,5 @@
 from dataset import Dataset
-from nn_functions import *
+from nn.nn_functions import *
 from utils.weights_visualizator import VisualizeNN as VisNN
 
 import os
@@ -9,7 +9,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from neural_net import NeuralNet
+from nn.neural_net import NeuralNet
 
 
 class Visualizer:
@@ -109,14 +109,14 @@ if __name__ == '__main__':
     net = NeuralNet([(1, ""), (4, SIGMOID), (4, SIGMOID), (1, SOFTMAX)], MSE)  # cubic
 
     # data loading and preparation
-    data = Dataset(path='datasets/projekt1/regression/data.cube.train.1000.csv')
+    data = Dataset(path='../datasets/projekt1/regression/data.cube.train.1000.csv')
     data = data.to_numpy()
     x = np.atleast_2d(data[:, 0]).T
     y = np.atleast_2d(data[:, 1]).T
     sigmoid_normalized = min_max_normalize(y, y.min(), y.max())
     tanh_normalized = min_max_normalize(y, y.min(), y.max(), (-1, 1))
 
-    test_data = Dataset(path='datasets/projekt1/regression/data.cube.test.1000.csv')
+    test_data = Dataset(path='../datasets/projekt1/regression/data.cube.test.1000.csv')
     test_data = test_data.to_numpy()
     test_x = np.atleast_2d(test_data[:, 0]).T
     test_y = np.atleast_2d(test_data[:, 1]).T
@@ -135,8 +135,8 @@ if __name__ == '__main__':
     # print(net.net_structure)
     # Visualizer.show_gradients(model)
     model.train(x, sigmoid_normalized, epochs=100, learning_rate=0.01)
-    test_data = Dataset(path='datasets/projekt1/regression/data.cube.test.1000.csv')
-    Visualizer.show_prediction(model, test_data, savefig=True, path='plots/predict_regression/example.jpg')
+    test_data = Dataset(path='../datasets/projekt1/regression/data.cube.test.1000.csv')
+    Visualizer.show_prediction(model, test_data, savefig=True, path='../plots/predict_regression/example.jpg')
     # cubic
     # net.train(x, sigmoid_normalized, epochs=2000, learning_rate=0.01)
 

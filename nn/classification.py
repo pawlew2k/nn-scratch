@@ -2,14 +2,14 @@ from sklearn.metrics import classification_report
 from sklearn.preprocessing import LabelBinarizer
 
 from dataset import Dataset
-from neural_net import NeuralNet
-from nn_functions import *
-from visualizer import Visualizer
+from nn.neural_net import NeuralNet
+from nn.nn_functions import *
+from visualization.visualizer import Visualizer
 
 
 # CLASSIFICATION
 def classification(train_path: str, test_path: str, model: NeuralNet, hidden_function: str,
-                   epochs: int = 1000, learning_rate: float = 0.01, include_bias: bool = True):
+                   epochs: int = 1000, learning_rate: float = 0.01, include_bias: bool = True, plot_path: str = '../plots/predict_classification/example.jpg'):
     # load data
     train_x, train_y, test_x, test_y = prepare_data_for_classification(train_path, test_path)
 
@@ -18,7 +18,7 @@ def classification(train_path: str, test_path: str, model: NeuralNet, hidden_fun
     model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias)
 
     # predict and evaluate network
-    return predict_and_evaluate_classification(model, test_path, test_x, test_y, include_bias=include_bias)
+    return predict_and_evaluate_classification(model, test_path, test_x, test_y, include_bias=include_bias, plot_path=plot_path)
 
 
 def prepare_data_for_classification(train_path: str, test_path: str, include_bias: bool = True):
@@ -50,11 +50,12 @@ def prepare_data_for_classification(train_path: str, test_path: str, include_bia
     return train_x, train_y, test_x, test_y
 
 
-def predict_and_evaluate_classification(model, test_path, test_x, test_y, include_bias: bool = True):
+def predict_and_evaluate_classification(model, test_path, test_x, test_y, include_bias: bool = True,
+                                        plot_path: str = '../plots/predict_classification/example.jpg'):
     print("[INFO] evaluating network...")
     Visualizer.show_prediction(model,
                                Dataset(path=test_path),
-                               savefig=False, path='plots/predict_classification/example.jpg',
+                               savefig=False, path=plot_path,
                                include_bias=include_bias)
 
     predictions = model.predict(test_x)

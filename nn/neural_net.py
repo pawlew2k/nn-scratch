@@ -1,4 +1,4 @@
-from nn_functions import *
+from nn.nn_functions import *
 
 
 class Layer:
