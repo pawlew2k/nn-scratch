@@ -46,10 +46,18 @@ class Layer:
         return '\n'.join([f'W_{i}={w[i]}' for i in range(w.shape[0])])
 
     def get_weights(self):
-        return self.weights[0:-1, 0:-1] if self.include_bias and not self.is_last else self.weights[0:-1, :]
+        if not self.include_bias:
+            return self.weights
+        if self.is_last:
+            return self.weights[0:-1, :]
+        return self.weights[0:-1, 0:-1]
 
     def get_gradient(self):
-        return self.gradient[0:-1, 0:-1] if self.include_bias and not self.is_last else self.gradient[0:-1, :]
+        if not self.include_bias:
+            return self.gradient
+        if self.is_last:
+            return self.gradient[0:-1, :]
+        return self.gradient[0:-1, 0:-1]
 
 
 class NeuralNet:
