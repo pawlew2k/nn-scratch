@@ -81,7 +81,7 @@ def predict_and_evaluate_classification(model, test_path, test_x, test_y, includ
     print(f"loss: {loss}")
 
     predictions = predictions.argmax(axis=1)
-    f1 = f1_score(test_y.argmax(axis=1), predictions)
+    f1 = f1_score(test_y.argmax(axis=1), predictions, average='micro')
     print()
 
     Visualizer.show_metrics(model,
