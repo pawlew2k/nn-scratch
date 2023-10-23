@@ -130,6 +130,11 @@ class Visualizer:
         else:
             raise Exception('Task in model is undefined')
 
+        # plt.yscale("log")
+        plt.grid(which="major", linewidth=1)
+        plt.grid(which="minor", linewidth=0.2)
+        plt.minorticks_on()
+
         if savefig:
             if path:
                 Visualizer.save_fig(path)

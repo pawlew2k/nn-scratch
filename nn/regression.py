@@ -71,6 +71,11 @@ def predict_and_evaluate_regression(model, test_path, test_x, test_y, include_bi
                                include_bias=include_bias, display_information=display_information)
 
     predictions = model.predict(test_x)
-    print(f"loss: {model.loss(test_y, predictions)}")
+    loss = model.loss(test_y, predictions)
+    print(f"loss: {loss}")
+
+    Visualizer.show_metrics(model,
+                            savefig=False, path=plot_path,
+                            display_information=display_information, loss=loss)
 
     return predictions
