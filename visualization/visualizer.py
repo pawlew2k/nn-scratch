@@ -113,8 +113,6 @@ class Visualizer:
     @staticmethod
     def show_metrics(net: NeuralNet, savefig: bool = False, path: str = None, display_information=None, loss=None,
                      f1=None):
-        if display_information is not None:
-            plt.title(f"Metrics: '{display_information}'")
 
         epochs = []
         losses = []
@@ -129,7 +127,13 @@ class Visualizer:
 
         plt.plot(epochs, losses)
 
-        plt.title(f"loss on test set: {loss}\nf1 on test set: {f1}")
+        title = f'loss on test set: {loss}\nf1 on test set: {f1}'
+        if display_information is not None:
+            pre_title = f"Metrics: '{display_information}'\n"
+            plt.title(pre_title + title, fontsize=8)
+        else:
+            plt.title(title)
+
         plt.xlabel("epochs")
 
         if net.task_type == TaskType.CLASSIFICATION:
@@ -140,9 +144,9 @@ class Visualizer:
         else:
             raise Exception('Task in model is undefined')
 
-        # plt.yscale("log")
-        plt.grid(which="major", linewidth=1)
-        plt.grid(which="minor", linewidth=0.2)
+        plt.yscale('log')
+        plt.grid(which='major', linewidth=1)
+        plt.grid(which='minor', linewidth=0.2)
         plt.minorticks_on()
 
         if savefig:

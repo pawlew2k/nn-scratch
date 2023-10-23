@@ -85,7 +85,7 @@ def predict_and_evaluate_classification(model, test_path, test_x, test_y, includ
     print()
 
     Visualizer.show_metrics(model,
-                            savefig=False, path=plot_path,
+                            savefig=True, path=plot_path.replace('predict_classification', 'metrics_classification'),
                             display_information=display_information, loss=loss, f1=f1)
 
     return predictions
