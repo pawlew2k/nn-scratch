@@ -79,7 +79,7 @@ class Layer():
         linewidth = np.log(abs_weight)
 
         # draw the weights and adjust the labels of weights to avoid overlapping
-        if abs_weight > 0.5:
+        if textoverlaphandler:
             # while loop to determine the optimal locaton for text lables to avoid overlapping
             index_step = 2
             num_segments = 10
@@ -96,7 +96,7 @@ class Layer():
                             neuron2.y - neuron1.y + 2 * y_adjustment) / num_segments
 
             # print("Label positions: ", "{:.2f}".format(txt_x_pos), "{:.2f}".format(txt_y_pos), "{:3.2f}".format(weight))
-            a = pyplot.gca().text(txt_x_pos, txt_y_pos, "{:3.2f}".format(weight), size=8, ha='center')
+            a = pyplot.gca().text(txt_x_pos, txt_y_pos, "{:.4}".format(weight), size=8, ha='center')
             a.set_bbox(dict(facecolor='white', alpha=0))
             # print(a.get_bbox_patch().get_height())
 
@@ -162,13 +162,16 @@ class NeuralNetwork():
         layer = Layer(self, number_of_neurons, self.number_of_neurons_in_widest_layer)
         self.layers.append(layer)
 
-    def draw(self, weights_list=None):
-        # vertical_distance_between_layers and horizontal_distance_between_neurons are the same with the variables of the same name in layer class
-        vertical_distance_between_layers = 6
-        horizontal_distance_between_neurons = 2
-        overlaphandler = TextOverlappingHandler( \
-            self.number_of_neurons_in_widest_layer * horizontal_distance_between_neurons, \
-            len(self.layers) * vertical_distance_between_layers, grid_size=0.2)
+    def draw(self, weights_list=None, show_values: bool = False):
+        if show_values:
+            # vertical_distance_between_layers and horizontal_distance_between_neurons are the same with the variables of the same name in layer class
+            vertical_distance_between_layers = 6
+            horizontal_distance_between_neurons = 2
+            overlaphandler = TextOverlappingHandler( \
+                self.number_of_neurons_in_widest_layer * horizontal_distance_between_neurons, \
+                len(self.layers) * vertical_distance_between_layers, grid_size=0.2)
+        else:
+            overlaphandler = None
 
         pyplot.figure(figsize=(12, 9))
         for i in range(len(self.layers)):
@@ -189,7 +192,7 @@ class DrawNN():
     # from input layer to output layer, e.g., a neural network of 5 nerons in the input layer, 
     # 10 neurons in the hidden layer 1 and 1 neuron in the output layer is [5, 10, 1]
     # para: weights_list (optional) is the output weights list of a neural network which can be obtained via classifier.coefs_
-    def __init__(self, neural_network, weights_list=None):
+    def __init__(self, neural_network, weights_list=None, show_values: bool = False):
         self.neural_network = neural_network
         self.weights_list = weights_list
         # if weights_list is none, then create a uniform list to fill the weights_list
@@ -199,13 +202,14 @@ class DrawNN():
                 tempArr = np.ones((first, second)) * 0.4
                 weights_list.append(tempArr)
             self.weights_list = weights_list
+        self.show_values = show_values
 
     def draw(self, savefig=False, path: str = None):
         widest_layer = max(self.neural_network)
         network = NeuralNetwork(widest_layer)
         for l in self.neural_network:
             network.add_layer(l)
-        network.draw(self.weights_list)
+        network.draw(self.weights_list, self.show_values)
         if savefig:
             if path:
                 dir = os.path.dirname(path)

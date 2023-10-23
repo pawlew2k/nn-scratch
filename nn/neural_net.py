@@ -25,6 +25,7 @@ class Layer:
         self.activ_func = ACTIVATION_FUNCTION_DICT[activ_func]
         self.activ_func_deriv = ACTIVATION_FUNCTION_DERIVATIVE_DICT[activ_func]
         self.is_last = is_last
+        self.include_bias = include_bias
 
         bias_addition = 1 if include_bias else 0
 
@@ -45,10 +46,10 @@ class Layer:
         return '\n'.join([f'W_{i}={w[i]}' for i in range(w.shape[0])])
 
     def get_weights(self):
-        return self.weights[0:-1, 0:-1] if not self.is_last else self.weights[0:-1, :]
+        return self.weights[0:-1, 0:-1] if self.include_bias and not self.is_last else self.weights[0:-1, :]
 
     def get_gradient(self):
-        return self.gradient[0:-1, 0:-1] if not self.is_last else self.gradient[0:-1, :]
+        return self.gradient[0:-1, 0:-1] if self.include_bias and not self.is_last else self.gradient[0:-1, :]
 
 
 class NeuralNet:

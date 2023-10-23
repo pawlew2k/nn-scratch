@@ -44,15 +44,25 @@ class Visualizer:
             plt.show()
 
     @staticmethod
-    def show_net_weights(net: NeuralNet, savefig: bool = False, path: str = None):
+    def show_net_weights(net: NeuralNet, savefig: bool = False, path: str = None, flatten: bool = False):
         weights = [layer.get_weights() for layer in net.layers]
-        network = VisNN.DrawNN(net.net_structure, weights)
+        if not flatten:
+            network = VisNN.DrawNN(net.net_structure, weights, show_values=flatten)
+        else:
+            flat_weights = [np.array([[np.sqrt(np.sum(weight ** 2))]]) for weight in weights]  # L2 norm
+            net_structure = [1 for _ in range(len(net.net_structure))]
+            network = VisNN.DrawNN(net_structure, flat_weights, show_values=flatten)
         network.draw(savefig, path)
 
     @staticmethod
-    def show_gradients(net: NeuralNet, savefig: bool = False, path: str = None):
+    def show_gradients(net: NeuralNet, savefig: bool = False, path: str = None, flatten: bool = False):
         gradients = [layer.get_gradient() for layer in net.layers]
-        network = VisNN.DrawNN(net.net_structure, gradients)
+        if not flatten:
+            network = VisNN.DrawNN(net.net_structure, gradients, show_values=flatten)
+        else:
+            flat_gradients = [np.array([[np.sqrt(np.sum(gradient ** 2))]]) for gradient in gradients]  # L2 norm
+            net_structure = [1 for _ in range(len(net.net_structure))]
+            network = VisNN.DrawNN(net_structure, flat_gradients, show_values=flatten)
         network.draw(savefig, path)
 
     @staticmethod
@@ -176,11 +186,11 @@ if __name__ == '__main__':
 
     # train neural network
     print("[INFO] training network...")
-    # for i in range(10):
-    #     model.train(x, sigmoid_normalized, epochs=10, learning_rate=0.01)
+    for i in range(1):
+        model.train(x, sigmoid_normalized, epochs=10, learning_rate=0.01)
     # print(net)
     # print(net.net_structure)
-    # Visualizer.show_gradients(model)
+    Visualizer.show_net_weights(model, flatten=False)
     model.train(x, sigmoid_normalized, epochs=100, learning_rate=0.01)
     test_data = Dataset(path='../datasets/projekt1/regression/data.cube.test.1000.csv')
     Visualizer.show_prediction(model, test_data, savefig=True, path='../plots/predict_regression/example.jpg')
