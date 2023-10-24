@@ -1,5 +1,6 @@
 from enum import Enum
 
+import numpy as np
 from sklearn.metrics import f1_score
 
 import nn.nn_functions
@@ -46,10 +47,18 @@ class Layer:
         return '\n'.join([f'W_{i}={w[i]}' for i in range(w.shape[0])])
 
     def get_weights(self):
-        return self.weights[0:-1, 0:-1] if self.include_bias and not self.is_last else self.weights[0:-1, :]
+        if not self.include_bias:
+            return self.weights
+        if self.is_last:
+            return self.weights[0:-1, :]
+        return self.weights[0:-1, 0:-1]
 
     def get_gradient(self):
-        return self.gradient[0:-1, 0:-1] if self.include_bias and not self.is_last else self.gradient[0:-1, :]
+        if not self.include_bias:
+            return self.gradient
+        if self.is_last:
+            return self.gradient[0:-1, :]
+        return self.gradient[0:-1, 0:-1]
 
 
 class NeuralNet:
@@ -82,7 +91,8 @@ class NeuralNet:
 
     # train neural network on training_data
     def train(self, training_data, target_values, epochs: int = 1000, learning_rate=0.001, dynamic_learning_rate=False,
-              learning_rate_decrease=5000, display_update=10, gradient_normalization=False, include_bias: bool = True):
+              learning_rate_decrease=5000, display_update=10, gradient_normalization=False, include_bias: bool = True,
+              gradient_descent: str = None):
 
         self.learning_rate = learning_rate
 
@@ -90,15 +100,39 @@ class NeuralNet:
             training_data = np.c_[training_data, np.ones((training_data.shape[0]))]
 
         for epoch in range(epochs):
-            for inputs, target in zip(training_data, target_values):
-                inputs = np.atleast_2d(inputs)
-                target = np.atleast_2d(target)
+            # BATCH
+            if gradient_descent == "batch":
+                inputs = training_data
+                target = target_values
 
                 # Feed forward
                 self.feed_forward(inputs.copy())
 
                 # Back propagation
                 self.backpropagation(inputs, target, gradient_normalization)
+            # MINI-BATCH
+            elif gradient_descent == "mini-batch":
+                batch_size = 16
+                for i in range(int(len(training_data) / batch_size)):
+                    inputs = training_data[i * batch_size:(i + 1) * batch_size]
+                    target = target_values[i * batch_size:(i + 1) * batch_size]
+
+                    # Feed forward
+                    self.feed_forward(inputs.copy())
+
+                    # Back propagation
+                    self.backpropagation(inputs, target, gradient_normalization)
+            # SGD
+            else:
+                for inputs, target in zip(training_data, target_values):
+                    inputs = np.atleast_2d(inputs)
+                    target = np.atleast_2d(target)
+
+                    # Feed forward
+                    self.feed_forward(inputs.copy())
+
+                    # Back propagation
+                    self.backpropagation(inputs, target, gradient_normalization)
 
             # decrease learning rate when further down the calculations
             if dynamic_learning_rate:
@@ -118,11 +152,13 @@ class NeuralNet:
     def backpropagation(self, inputs, target, gradient_normalization):
         # updating last layer
         if self.loss_name == CROSS_ENTROPY:
-            self.layers[-1].delta = delta_softmax_cross_entropy(target, self.layers[-1].outputs)
+            d = delta_softmax_cross_entropy(target, self.layers[-1].outputs)
+            self.layers[-1].delta = np.tile(np.sum(d, axis=0), (len(d), 1))
         else:
             loss_function_derivative = self.loss_deriv(target, self.layers[-1].outputs)
             activation_function_derivative = self.layers[-1].activ_func_deriv(self.layers[-1].outputs)
-            self.layers[-1].delta = loss_function_derivative * activation_function_derivative
+            d = loss_function_derivative * activation_function_derivative
+            self.layers[-1].delta = np.tile(np.sum(d, axis=0), (len(d), 1))
 
         # weight change in last layer
         layer_input = inputs

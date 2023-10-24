@@ -11,6 +11,8 @@ from pandas.core.frame import DataFrame
 
 from nn.neural_net import NeuralNet, TaskType, TrainingReport
 
+COLORS = list(mcolors.TABLEAU_COLORS.values())
+
 
 class Visualizer:
     @staticmethod
@@ -29,14 +31,15 @@ class Visualizer:
             for label in pd.unique(dataset.cls):
                 x = dataset.loc[dataset['cls'] == label].x
                 y = dataset.loc[dataset['cls'] == label].y
-                plt.scatter(x, y, marker='.', s=20, label=label)
+                plt.scatter(x, y, marker='.', s=20, label=label, color=COLORS[label - 1])
             plt.legend(title='labels:')
         else:
             raise Exception('Task in dataset undefined')
 
         if savefig:
             if hasattr(dataset, 'path'):
-                path = f'plots/{dataset.path.rsplit(sep=".", maxsplit=1)[0]}.jpg'
+                path = dataset.path.replace('datasets', 'plots').replace('csv', 'jpg')
+                print(path)
                 Visualizer.save_fig(path)
             else:
                 raise Exception('Dataset has no attributes: path')
@@ -67,11 +70,11 @@ class Visualizer:
 
     @staticmethod
     def show_prediction(net: NeuralNet, dataset: DataFrame, savefig: bool = False, path: str = None,
-                        include_bias: bool = True, display_information=None):
+                        include_bias: bool = True, display_information=None, hidden_function: str = None):
         Visualizer.show_dataset(dataset, hold_plot=True)
         if hasattr(dataset, 'name'):
             if display_information is not None:
-                plt.title(f"Prediction dataset: '{display_information}'")
+                plt.title(f"{display_information}")
             else:
                 plt.title(f"Prediction dataset: '{dataset.name}'")
         if dataset.task == 'regression':
@@ -79,14 +82,16 @@ class Visualizer:
             prepared_x = [np.atleast_2d(datum) for datum in x]
             if include_bias:
                 prepared_x = [np.c_[datum, np.ones((datum.shape[0]))] for datum in prepared_x]
-            # print(prepared_x)
             y = [net.predict(datum) for datum in prepared_x]
-            y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y)
+            y_normalized = y
+            if hidden_function == TANH:
+                y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y, (-1, 1))
+            elif hidden_function == SIGMOID:
+                y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y)
             plt.scatter(x, y_normalized, marker='.', s=1, edgecolors='green')
             plt.legend(['observation', 'prediction'])
 
         elif dataset.task == 'classification':
-            colors = list(mcolors.TABLEAU_COLORS.values())
             for label in pd.unique(dataset.cls):
                 x = dataset.loc[dataset['cls'] == label].x
                 y = dataset.loc[dataset['cls'] == label].y
@@ -97,7 +102,7 @@ class Visualizer:
                 print(predicted_labels)
                 for x_datum, y_datum, pred_label in zip(x, y, predicted_labels):
                     if pred_label != label:
-                        plt.scatter(x_datum, y_datum, marker='.', s=20, color=colors[pred_label - 1])
+                        plt.scatter(x_datum, y_datum, marker='.', s=20, color=COLORS[pred_label - 1])
                         plt.scatter(x_datum, y_datum, marker='x', s=40, color='red', linewidths=0.6)
         else:
             raise Exception('Task in dataset undefined')
