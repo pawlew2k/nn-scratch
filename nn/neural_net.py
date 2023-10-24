@@ -91,7 +91,8 @@ class NeuralNet:
 
     # train neural network on training_data
     def train(self, training_data, target_values, epochs: int = 1000, learning_rate=0.001, dynamic_learning_rate=False,
-              learning_rate_decrease=5000, display_update=10, gradient_normalization=False, include_bias: bool = True, gradient_descent: str = "mini-batch"):
+              learning_rate_decrease=5000, display_update=10, gradient_normalization=False, include_bias: bool = True,
+              gradient_descent: str = None):
 
         self.learning_rate = learning_rate
 
@@ -111,10 +112,10 @@ class NeuralNet:
                 self.backpropagation(inputs, target, gradient_normalization)
             # MINI-BATCH
             elif gradient_descent == "mini-batch":
-                batch_size = 10
-                for i in range(int(len(training_data)/batch_size)):
-                    inputs = training_data[i*batch_size:(i+1)*batch_size]
-                    target = target_values[i*batch_size:(i+1)*batch_size]
+                batch_size = 16
+                for i in range(int(len(training_data) / batch_size)):
+                    inputs = training_data[i * batch_size:(i + 1) * batch_size]
+                    target = target_values[i * batch_size:(i + 1) * batch_size]
 
                     # Feed forward
                     self.feed_forward(inputs.copy())
@@ -152,14 +153,12 @@ class NeuralNet:
         # updating last layer
         if self.loss_name == CROSS_ENTROPY:
             d = delta_softmax_cross_entropy(target, self.layers[-1].outputs)
-            d_mean = np.tile(np.mean(d, axis=0), (len(d), 1))
-            self.layers[-1].delta = d_mean
+            self.layers[-1].delta = np.tile(np.sum(d, axis=0), (len(d), 1))
         else:
             loss_function_derivative = self.loss_deriv(target, self.layers[-1].outputs)
             activation_function_derivative = self.layers[-1].activ_func_deriv(self.layers[-1].outputs)
             d = loss_function_derivative * activation_function_derivative
-            d_mean = np.tile(np.mean(d, axis=0), (len(d), 1))
-            self.layers[-1].delta = d_mean
+            self.layers[-1].delta = np.tile(np.sum(d, axis=0), (len(d), 1))
 
         # weight change in last layer
         layer_input = inputs

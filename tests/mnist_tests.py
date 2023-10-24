@@ -7,17 +7,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 
 from nn.neural_net import NeuralNet
-from nn.nn_functions import TANH, LINEAR, MSE, SIGMOID, SOFTMAX, CROSS_ENTROPY
+from nn.nn_functions import TANH, LINEAR, MSE, SIGMOID, SOFTMAX, CROSS_ENTROPY, RELU
+from nn.nn_serializer import serialize_model
 
 
 #### MNIST CLASSIFICATION
 def mnist_classification():
-    print("[INFO] loading MNIST (sample) dataset...")
     digits = datasets.load_digits()
     data = digits.data.astype("float")
     data = (data - data.min()) / (data.max() - data.min())
-    print("[INFO] samples: {}, dim: {}".format(data.shape[0],
-                                               data.shape[1]))
 
     # construct the training and testing splits
     (trainX, testX, trainY, testY) = train_test_split(data,
@@ -28,14 +26,16 @@ def mnist_classification():
 
     # train the network
     print("[INFO] training network...")
-    # nn = NeuralNet([trainX.shape[1], 32, 16, 10], )
     model = NeuralNet([(trainX.shape[1], ""), (32, SIGMOID), (16, SIGMOID), (10, SOFTMAX)], CROSS_ENTROPY)
     print("[INFO] {}".format(model))
 
     start = time.time()
-    model.train(trainX, trainY, epochs=500, learning_rate=0.01)
+    model.train(trainX, trainY, epochs=5000, learning_rate=0.005)
     end = time.time()
     print(f"elapsed time {end - start}")
+
+    # save model
+    serialize_model(model, '/models/mnist/mnist.json')
 
     # evaluate the network
     print("[INFO] evaluating network...")
@@ -44,4 +44,4 @@ def mnist_classification():
 
     predictions = model.predict(prepare_test_x)
     predictions = predictions.argmax(axis=1)
-    print(classification_report(testY.argmax(axis=1), predictions))
+    print(classification_report(testY.argmax(axis=1), predictions, digits=4))

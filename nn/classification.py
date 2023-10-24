@@ -23,7 +23,7 @@ def classification(train_path: str, test_path: str, model: NeuralNet, loss_funct
     # train neural network
     print("[INFO] training network...")
     start = time.time()
-    model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias)
+    model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias, gradient_descent="mini-batch")
     end = time.time()
     print(f"time: {end - start}")
 
