@@ -6,12 +6,12 @@ from nn.regression import regression
 plots_default_path = '../plots/predict_classification'
 
 
-def simple_classification(hf: str = SIGMOID):
+def simple_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_ENTROPY):
     train_path = 'datasets/projekt1/classification/data.simple.train.500.csv'
     test_path = 'datasets/projekt1/classification/data.simple.test.500.csv'
     hidden_function = hf
-    last_layer_function = SOFTMAX
-    loss_function = CROSS_ENTROPY
+    last_layer_function = ll
+    loss_function = lf
     include_bias = True
 
     plot_path = plots_default_path + '/simple/example.jpg'
@@ -20,15 +20,15 @@ def simple_classification(hf: str = SIGMOID):
     model = NeuralNet([(2, ""), (4, hidden_function), (2, last_layer_function)], loss_function,
                       include_bias=include_bias, task_type=TaskType.CLASSIFICATION)
     classification(train_path, test_path, model, loss_function=loss_function, epochs=300, include_bias=include_bias,
-                   plot_path=plot_path, display_information=f"Simple: {hidden_function}")
+                   plot_path=plot_path, display_information=f"Simple: {ll} + {lf}")
 
 
-def three_gauss_classification(hf: str = SIGMOID):
+def three_gauss_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_ENTROPY):
     train_path = 'datasets/projekt1/classification/data.three_gauss.train.500.csv'
     test_path = 'datasets/projekt1/classification/data.three_gauss.test.500.csv'
     hidden_function = hf
-    last_layer_function = SOFTMAX
-    loss_function = CROSS_ENTROPY
+    last_layer_function = ll
+    loss_function = lf
     include_bias = True
 
     plot_path = plots_default_path + '/three_gauss/example.jpg'
@@ -37,4 +37,4 @@ def three_gauss_classification(hf: str = SIGMOID):
     model = NeuralNet([(2, ""), (16, hidden_function), (3, last_layer_function)], loss_function,
                       include_bias=include_bias, task_type=TaskType.CLASSIFICATION)
     classification(train_path, test_path, model, loss_function=loss_function, epochs=300, include_bias=include_bias,
-                   plot_path=plot_path, display_information=f"Three gauss: {hidden_function}")
+                   plot_path=plot_path, display_information=f"Three gauss: {ll} + {lf}")

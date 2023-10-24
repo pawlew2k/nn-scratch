@@ -80,7 +80,7 @@ def predict_and_evaluate_regression(model, test_path, test_x, test_y, include_bi
     print(f"loss: {loss}")
 
     Visualizer.show_metrics(model,
-                            savefig=True, path=plot_path.replace('predict_regression', 'metrics_regression'),
+                            savefig=False, path=plot_path.replace('predict_regression', 'metrics_regression'),
                             display_information=display_information, loss=loss)
 
     return predictions
