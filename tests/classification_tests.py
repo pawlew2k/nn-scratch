@@ -23,7 +23,7 @@ def simple_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_
                    plot_path=plot_path, display_information=f"Simple: {ll} + {lf}")
 
 
-def three_gauss_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_ENTROPY):
+def three_gauss_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_ENTROPY, lr=0.01, epochs=300):
     train_path = 'datasets/projekt1/classification/data.three_gauss.train.500.csv'
     test_path = 'datasets/projekt1/classification/data.three_gauss.test.500.csv'
     hidden_function = hf
@@ -36,5 +36,5 @@ def three_gauss_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = C
     # create neural network
     model = NeuralNet([(2, ""), (16, hidden_function), (3, last_layer_function)], loss_function,
                       include_bias=include_bias, task_type=TaskType.CLASSIFICATION)
-    classification(train_path, test_path, model, loss_function=loss_function, epochs=300, include_bias=include_bias,
-                   plot_path=plot_path, display_information=f"Three gauss: {ll} + {lf}")
+    classification(train_path, test_path, model, loss_function=loss_function, epochs=epochs, include_bias=include_bias,
+                   plot_path=plot_path, display_information=f"Three gauss: {ll} + {lf}", learning_rate=lr)

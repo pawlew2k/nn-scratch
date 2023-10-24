@@ -18,15 +18,18 @@ CROSS_ENTROPY = "CROSS_ENTROPY"
 HINGE = "HINGE"
 
 # EPSILON TO ADD TO LOG OR DIVIDE WHEN INVALID VALUE WOULD BE ENCOUNTERED
-EPS = 1e-50
+EPS = 1e-5
 
 
 def raise_(ex):
     raise ex
 
 
+LEAKY_RELU_CONST = 0.01
+
+
 def relu(arr: np.ndarray):
-    return np.maximum(0, arr)
+    return np.where(arr > 0, arr, LEAKY_RELU_CONST * arr)
 
 
 def sigmoid(arr: np.ndarray):
@@ -58,7 +61,7 @@ ACTIVATION_FUNCTION_DICT: dict[str, Callable[[np.ndarray], np.ndarray]] = {
 
 
 def relu_derivative(arr: np.ndarray):
-    return 1. * (arr > 0)
+    return np.where(arr > 0, 1, LEAKY_RELU_CONST)
 
 
 def sigmoid_derivative(arr: np.ndarray):
@@ -90,6 +93,11 @@ def msle(target, actual):
     return np.mean((np.log(t) - np.log(a)) ** 2)
 
 
+def cross_entropy(target, actual):
+    a = np.where(np.logical_and(- EPS < actual, actual < EPS), EPS, actual)
+    return np.mean(-np.sum(target * np.log(a), axis=1))
+
+
 LOSS_FUNCTION_DICT: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
     # MEAN SQUARED ERROR
     MSE: lambda target, actual: np.mean((target - actual) ** 2),
@@ -98,7 +106,7 @@ LOSS_FUNCTION_DICT: dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
     # MEAN SQUARED LOGARITHMIC ERROR
     MSLE: lambda target, actual: msle(target, actual),
     # CROSS ENTROPY
-    CROSS_ENTROPY: lambda target, actual: np.mean(-np.sum(target * np.log(actual), axis=1)),
+    CROSS_ENTROPY: lambda target, actual: cross_entropy(target, actual),
     # HINGE LOSS
     HINGE: lambda target, actual: np.mean(np.mean(np.maximum(0, 1 - target * actual), axis=1))
 }
