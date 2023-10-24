@@ -12,6 +12,7 @@ class NeuralNetEncoder(json.JSONEncoder):
                 'learning_rate': obj.learning_rate,
                 'loss_name': obj.loss_name,
                 'layers': obj.layers,
+                'task_type': obj.task_type
             }
         elif isinstance(obj, Layer):
             return {
