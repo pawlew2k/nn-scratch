@@ -1,3 +1,5 @@
+import time
+
 from sklearn.metrics import classification_report, f1_score
 from sklearn.preprocessing import LabelBinarizer
 
@@ -20,7 +22,10 @@ def classification(train_path: str, test_path: str, model: NeuralNet, loss_funct
 
     # train neural network
     print("[INFO] training network...")
+    start = time.time()
     model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias)
+    end = time.time()
+    print(f"time: {end - start}")
 
     # save model
     if save_model:
