@@ -11,7 +11,6 @@ from pandas.core.frame import DataFrame
 
 from nn.neural_net import NeuralNet, TaskType, TrainingReport
 
-
 COLORS = list(mcolors.TABLEAU_COLORS.values())
 
 
@@ -71,11 +70,11 @@ class Visualizer:
 
     @staticmethod
     def show_prediction(net: NeuralNet, dataset: DataFrame, savefig: bool = False, path: str = None,
-                        include_bias: bool = True, display_information=None):
+                        include_bias: bool = True, display_information=None, hidden_function: str = None):
         Visualizer.show_dataset(dataset, hold_plot=True)
         if hasattr(dataset, 'name'):
             if display_information is not None:
-                plt.title(f"Prediction dataset: '{display_information}'")
+                plt.title(f"{display_information}")
             else:
                 plt.title(f"Prediction dataset: '{dataset.name}'")
         if dataset.task == 'regression':
@@ -84,7 +83,11 @@ class Visualizer:
             if include_bias:
                 prepared_x = [np.c_[datum, np.ones((datum.shape[0]))] for datum in prepared_x]
             y = [net.predict(datum) for datum in prepared_x]
-            y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y)
+            y_normalized = y
+            if hidden_function == TANH:
+                y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y, (-1, 1))
+            elif hidden_function == SIGMOID:
+                y_normalized = reverse_min_max_normalize(np.asarray(y), dataset.y)
             plt.scatter(x, y_normalized, marker='.', s=1, edgecolors='green')
             plt.legend(['observation', 'prediction'])
 

@@ -1,3 +1,5 @@
+import time
+
 from dataset import Dataset
 from nn.neural_net import NeuralNet
 from nn.nn_functions import *
@@ -16,9 +18,12 @@ def regression(train_path: str, test_path: str, model: NeuralNet, hidden_functio
     # load data
     train_x, train_y, test_x, test_y = prepare_data_for_regression(train_path, test_path, hidden_function, include_bias)
 
+    start = time.time()
     # train neural network
     print("[INFO] training network...")
     model.train(train_x, train_y, epochs=epochs, learning_rate=learning_rate, include_bias=include_bias)
+    end = time.time()
+    print(f"time: {end - start}")
 
     # save model
     if save_model:
@@ -27,7 +32,7 @@ def regression(train_path: str, test_path: str, model: NeuralNet, hidden_functio
     # predict and evaluate network
     return predict_and_evaluate_regression(model, test_path, test_x, test_y, include_bias=include_bias,
                                            plot_path=plot_path, savefig=savefig,
-                                           display_information=display_information)
+                                           display_information=display_information, hidden_function=hidden_function)
 
 
 def prepare_data_for_regression(train_path: str, test_path: str, hidden_function: str = SIGMOID,
@@ -63,12 +68,12 @@ def prepare_data_for_regression(train_path: str, test_path: str, hidden_function
 
 def predict_and_evaluate_regression(model, test_path, test_x, test_y, include_bias: bool = True,
                                     plot_path: str = default_plot_path, savefig: bool = False,
-                                    display_information=None):
+                                    display_information=None, hidden_function: str = None):
     print("[INFO] evaluating network...")
     Visualizer.show_prediction(model,
                                Dataset(path=test_path),
                                savefig=savefig, path=plot_path,
-                               include_bias=include_bias, display_information=display_information)
+                               include_bias=include_bias, display_information=display_information, hidden_function=hidden_function)
 
     predictions = model.predict(test_x)
     loss = model.loss(test_y, predictions)

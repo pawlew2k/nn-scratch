@@ -153,8 +153,9 @@ WEIGHT_HEURISTICS: dict[str, Callable[[int, int], float]] = {
 }
 
 
-def reverse_min_max_normalize(normalized_data: np.ndarray, input_data: np.ndarray):
+def reverse_min_max_normalize(normalized_data: np.ndarray, input_data: np.ndarray, feature_range=(0, 1)):
     data = normalized_data.copy()
+    data = (data - feature_range[0]) / (feature_range[1] - feature_range[0])
     min_val = np.min(input_data)
     max_val = np.max(input_data)
     return data * (max_val - min_val) + min_val
