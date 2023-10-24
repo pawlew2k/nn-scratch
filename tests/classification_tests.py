@@ -6,7 +6,7 @@ from nn.regression import regression
 plots_default_path = '../plots/predict_classification'
 
 
-def simple_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_ENTROPY):
+def simple_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_ENTROPY, lr=0.01, epochs=300):
     train_path = 'datasets/projekt1/classification/data.simple.train.500.csv'
     test_path = 'datasets/projekt1/classification/data.simple.test.500.csv'
     hidden_function = hf
@@ -19,8 +19,8 @@ def simple_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_
     # create neural network
     model = NeuralNet([(2, ""), (4, hidden_function), (2, last_layer_function)], loss_function,
                       include_bias=include_bias, task_type=TaskType.CLASSIFICATION)
-    classification(train_path, test_path, model, loss_function=loss_function, epochs=300, include_bias=include_bias,
-                   plot_path=plot_path, display_information=f"Simple: {ll} + {lf}")
+    classification(train_path, test_path, model, loss_function=loss_function, epochs=epochs, include_bias=include_bias,
+                   plot_path=plot_path, display_information=f"Simple: {ll} + {lf}", learning_rate=lr)
 
 
 def three_gauss_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = CROSS_ENTROPY, lr=0.01, epochs=300):
