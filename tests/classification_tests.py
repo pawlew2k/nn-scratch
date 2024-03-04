@@ -38,3 +38,8 @@ def three_gauss_classification(hf: str = SIGMOID, ll: str = SOFTMAX, lf: str = C
                       include_bias=include_bias, task_type=TaskType.CLASSIFICATION)
     classification(train_path, test_path, model, loss_function=loss_function, epochs=epochs, include_bias=include_bias,
                    plot_path=plot_path, display_information=f"Three gauss: {ll} + {lf}", learning_rate=lr)
+
+
+if __name__ == '__main__':
+    simple_classification()
+    three_gauss_classification()

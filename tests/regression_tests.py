@@ -40,3 +40,8 @@ def cube_regression(hf: str = SIGMOID, lf=MSE, lr=0.01, epochs=300):
                       include_bias=include_bias, task_type=TaskType.REGRESSION)
     regression(train_path, test_path, model, hidden_function=hidden_function, epochs=epochs, include_bias=include_bias,
                plot_path=plot_path, savefig=False, display_information=f"Cube: {lf}", learning_rate=lr)
+
+
+if __name__ == '__main__':
+    activation_regression()
+    cube_regression()

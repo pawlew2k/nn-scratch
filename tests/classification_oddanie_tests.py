@@ -52,3 +52,9 @@ def xor_classification():
     model = NeuralNet([(x_dim, ""), (16, hidden_function), (y_dim, last_layer_function)], loss_function,
                       include_bias=include_bias)
     classification(train_path, test_path, model, loss_function=loss_function, epochs=400, include_bias=include_bias)
+
+
+if __name__ == '__main__':
+    circles_classification()
+    noisy_xor_classification()
+    xor_classification()

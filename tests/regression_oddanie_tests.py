@@ -45,3 +45,9 @@ def square_regression():
                        (16, hidden_function), (1, last_layer_function)], loss_function,
                       include_bias=include_bias)
     regression(train_path, test_path, model, hidden_function=hidden_function, epochs=1000, include_bias=include_bias)
+
+
+if __name__ == '__main__':
+    linear_regression()
+    multimodal_regression()
+    square_regression()
